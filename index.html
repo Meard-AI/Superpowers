@@ -354,14 +354,172 @@
             color: var(--ink-light);
         }
 
+        /* TEAR OVERLAY */
+        .tear-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .tear-half {
+            position: absolute;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg);
+            will-change: transform;
+            transition: none;
+        }
+
+        .tear-left {
+            left: 0;
+            clip-path: polygon(
+                0% 0%,
+                50% 0%,
+                50% 2%,
+                51.2% 4%,
+                49.5% 6.5%,
+                50.8% 9%,
+                49.2% 12%,
+                51.5% 14.5%,
+                49.8% 17%,
+                50.5% 20%,
+                49% 23%,
+                51.3% 25.5%,
+                49.7% 28%,
+                50.9% 31%,
+                49.3% 34%,
+                51.1% 36.5%,
+                49.6% 39%,
+                50.4% 42%,
+                49.1% 45%,
+                51.4% 47.5%,
+                49.5% 50%,
+                50.7% 53%,
+                49.2% 56%,
+                51.6% 58.5%,
+                49.8% 61%,
+                50.3% 64%,
+                49.4% 67%,
+                51.2% 69.5%,
+                49.6% 72%,
+                50.8% 75%,
+                49.1% 78%,
+                51.5% 80.5%,
+                49.7% 83%,
+                50.5% 86%,
+                49.3% 89%,
+                51.1% 91.5%,
+                49.8% 94%,
+                50.6% 97%,
+                50% 100%,
+                0% 100%
+            );
+        }
+
+        .tear-right {
+            left: 0;
+            clip-path: polygon(
+                100% 0%,
+                50% 0%,
+                50% 2%,
+                51.2% 4%,
+                49.5% 6.5%,
+                50.8% 9%,
+                49.2% 12%,
+                51.5% 14.5%,
+                49.8% 17%,
+                50.5% 20%,
+                49% 23%,
+                51.3% 25.5%,
+                49.7% 28%,
+                50.9% 31%,
+                49.3% 34%,
+                51.1% 36.5%,
+                49.6% 39%,
+                50.4% 42%,
+                49.1% 45%,
+                51.4% 47.5%,
+                49.5% 50%,
+                50.7% 53%,
+                49.2% 56%,
+                51.6% 58.5%,
+                49.8% 61%,
+                50.3% 64%,
+                49.4% 67%,
+                51.2% 69.5%,
+                49.6% 72%,
+                50.8% 75%,
+                49.1% 78%,
+                51.5% 80.5%,
+                49.7% 83%,
+                50.5% 86%,
+                49.3% 89%,
+                51.1% 91.5%,
+                49.8% 94%,
+                50.6% 97%,
+                50% 100%,
+                100% 100%
+            );
+        }
+
+        .tear-label {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 101;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 0.25em;
+            color: var(--red);
+            opacity: 0;
+            pointer-events: none;
+            white-space: nowrap;
+            transition: opacity 0.3s;
+        }
+
+        .tear-texture-left,
+        .tear-texture-right {
+            position: absolute;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            z-index: 2;
+            opacity: 0.25;
+        }
+
+        .tear-texture-left {
+            right: 0;
+            background: linear-gradient(to left, var(--ink) 0%, transparent 100%);
+        }
+
+        .tear-texture-right {
+            left: 0;
+            background: linear-gradient(to right, var(--ink) 0%, transparent 100%);
+        }
+
         @media (max-width: 600px) {
             .cover h1 { font-size: 2.6rem; }
             .panel-title { font-size: 2.2rem; }
             .panel { padding: 24px; }
+            .tear-label { font-size: 1rem; }
         }
     </style>
 </head>
 <body>
+    <!-- TEAR OVERLAY -->
+    <div class="tear-overlay" id="tearOverlay">
+        <div class="tear-half tear-left" id="tearLeft">
+            <div class="tear-texture-left"></div>
+        </div>
+        <div class="tear-half tear-right" id="tearRight">
+            <div class="tear-texture-right"></div>
+        </div>
+    </div>
+    <div class="tear-label" id="tearLabel">引き裂く SCROLL TO TEAR</div>
+
     <div class="halftone"></div>
     <div class="wrap">
 
@@ -662,6 +820,52 @@
         // -- ANIME.JS ANIMATIONS --
 
         document.addEventListener('DOMContentLoaded', () => {
+
+            // 0. TEAR SCROLL EFFECT
+            var tearLeft = document.getElementById('tearLeft');
+            var tearRight = document.getElementById('tearRight');
+            var tearOverlay = document.getElementById('tearOverlay');
+            var tearLabel = document.getElementById('tearLabel');
+            var tearProgress = { value: 0 };
+            var tearDone = false;
+            var TEAR_DISTANCE = 300; // scroll px to fully tear
+            var MAX_SHIFT = 55; // max % shift for each half
+
+            // Show the hint label initially
+            setTimeout(function() {
+                tearLabel.style.opacity = '1';
+            }, 1200);
+
+            function updateTear() {
+                var scrollY = window.scrollY || window.pageYOffset;
+                var t = Math.min(scrollY / TEAR_DISTANCE, 1);
+                // Ease out cubic for smooth feel
+                var eased = 1 - Math.pow(1 - t, 3);
+                var shift = eased * MAX_SHIFT;
+
+                tearLeft.style.transform = 'translateX(-' + shift + '%)';
+                tearRight.style.transform = 'translateX(' + shift + '%)';
+
+                // Fade label out as tearing starts
+                tearLabel.style.opacity = String(Math.max(0, 1 - t * 4));
+
+                if (t >= 1 && !tearDone) {
+                    tearDone = true;
+                    tearOverlay.style.visibility = 'hidden';
+                    tearLabel.style.display = 'none';
+                } else if (t < 1 && tearDone) {
+                    tearDone = false;
+                    tearOverlay.style.visibility = 'visible';
+                    tearLabel.style.display = 'block';
+                }
+            }
+
+            window.addEventListener('scroll', function() {
+                requestAnimationFrame(updateTear);
+            }, { passive: true });
+
+            // Initial state
+            updateTear();
 
             // 1. Timeline intro reveal
             var intro = anime.timeline({ easing: 'easeOutExpo' });
