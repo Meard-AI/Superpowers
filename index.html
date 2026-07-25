@@ -409,7 +409,7 @@
                         <option value="windsurf">Windsurf</option>
                     </select>
                 </div>
-                <code class="setup-cmd">cp -r ultra-instinct/ .agents/skills/</code>
+                <code class="setup-cmd">Download the ultra-instinct skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/ultra-instinct</code>
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -442,7 +442,7 @@
                         <option value="windsurf">Windsurf</option>
                     </select>
                 </div>
-                <code class="setup-cmd">cp -r copy-ability/ .agents/skills/</code>
+                <code class="setup-cmd">Download the copy-ability skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/copy-ability</code>
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -475,7 +475,7 @@
                         <option value="windsurf">Windsurf</option>
                     </select>
                 </div>
-                <code class="setup-cmd">cp -r invisible-attacks/ .agents/skills/</code>
+                <code class="setup-cmd">Download the invisible-attacks skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/invisible-attacks</code>
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -508,7 +508,7 @@
                         <option value="windsurf">Windsurf</option>
                     </select>
                 </div>
-                <code class="setup-cmd">cp -r mastery/ .agents/skills/</code>
+                <code class="setup-cmd">Download the mastery skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/mastery</code>
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -541,7 +541,7 @@
                         <option value="windsurf">Windsurf</option>
                     </select>
                 </div>
-                <code class="setup-cmd">cp -r heat-mode/ .agents/skills/</code>
+                <code class="setup-cmd">Download the heat-mode skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/heat-mode</code>
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -574,7 +574,7 @@
                         <option value="windsurf">Windsurf</option>
                     </select>
                 </div>
-                <code class="setup-cmd">cp -r cqc/ .agents/skills/</code>
+                <code class="setup-cmd">Download the cqc skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/cqc</code>
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -607,7 +607,7 @@
                         <option value="windsurf">Windsurf</option>
                     </select>
                 </div>
-                <code class="setup-cmd">cp -r animal-instinct/ .agents/skills/</code>
+                <code class="setup-cmd">Download the animal-instinct skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/animal-instinct</code>
             </article>
 
         </main>
@@ -616,19 +616,21 @@
     </div>
 
     <script>
-        // Platform setup command map
-        const platformPaths = {
-            antigravity: '.agents/skills/',
-            claude: '.claude/skills/',
-            opencode: '.opencode/skills/',
-            cursor: '.cursor/skills/',
-            windsurf: '.windsurf/skills/'
+        // Platform setup command map — agent prompts to pull from GitHub
+        const REPO = 'https://github.com/Meard-AI/Superpowers';
+        const platformDirs = {
+            antigravity: '.agents/skills',
+            claude: '.claude/skills',
+            opencode: '.opencode/skills',
+            cursor: '.cursor/skills',
+            windsurf: '.windsurf/skills'
         };
 
         function updateSetup(selectEl, skillFolder) {
-            const platform = selectEl.value;
-            const cmdEl = selectEl.closest('.panel').querySelector('.setup-cmd');
-            cmdEl.textContent = 'cp -r ' + skillFolder + '/ ' + platformPaths[platform];
+            var platform = selectEl.value;
+            var dir = platformDirs[platform];
+            var cmdEl = selectEl.closest('.panel').querySelector('.setup-cmd');
+            cmdEl.textContent = 'Download the ' + skillFolder + ' skill from ' + REPO + ' and install it into ' + dir + '/' + skillFolder;
         }
 
         function copyCmd(btn) {
