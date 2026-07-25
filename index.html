@@ -304,43 +304,7 @@
         .copy-btn:hover { background: var(--red); }
 
         /* PLATFORM SELECTOR */
-        .platform-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
 
-        .platform-label {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--ink-light);
-        }
-
-        .platform-select {
-            background: var(--code-bg);
-            color: var(--code-text);
-            border: 2px solid var(--ink);
-            padding: 5px 10px;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .setup-cmd {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            color: var(--red);
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: var(--code-bg);
-            border-left: 3px solid var(--ink-light);
-            display: block;
-        }
 
         /* FOOTER */
         footer {
@@ -521,6 +485,7 @@
     <div class="tear-label" id="tearLabel">引き裂く SCROLL TO TEAR</div>
 
     <div class="halftone"></div>
+    <div style="height:100vh"></div>
     <div class="wrap">
 
         <header class="nav">
@@ -557,17 +522,7 @@
                     <span>python3 scripts/reflex_router.py --query "git status" --json</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-                <div class="platform-row">
-                    <span class="platform-label">導入 Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'ultra-instinct')">
-                        <option value="antigravity">Antigravity</option>
-                        <option value="claude">Claude Code</option>
-                        <option value="opencode">OpenCode</option>
-                        <option value="cursor">Cursor</option>
-                        <option value="windsurf">Windsurf</option>
-                    </select>
-                </div>
-                <code class="setup-cmd">Download the ultra-instinct skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/ultra-instinct</code>
+
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -590,17 +545,7 @@
                     <span>python3 scripts/trajectory_cloner.py --log trace.log --name deploy-prod --json</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-                <div class="platform-row">
-                    <span class="platform-label">導入 Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'copy-ability')">
-                        <option value="antigravity">Antigravity</option>
-                        <option value="claude">Claude Code</option>
-                        <option value="opencode">OpenCode</option>
-                        <option value="cursor">Cursor</option>
-                        <option value="windsurf">Windsurf</option>
-                    </select>
-                </div>
-                <code class="setup-cmd">Download the copy-ability skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/copy-ability</code>
+
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -623,17 +568,7 @@
                     <span>python3 scripts/sandbox_enforcer.py --path "src/app.js" --allowed-root "/project" --json</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-                <div class="platform-row">
-                    <span class="platform-label">導入 Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'invisible-attacks')">
-                        <option value="antigravity">Antigravity</option>
-                        <option value="claude">Claude Code</option>
-                        <option value="opencode">OpenCode</option>
-                        <option value="cursor">Cursor</option>
-                        <option value="windsurf">Windsurf</option>
-                    </select>
-                </div>
-                <code class="setup-cmd">Download the invisible-attacks skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/invisible-attacks</code>
+
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -656,17 +591,7 @@
                     <span>python3 scripts/context_adapter.py --stage audit --json</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-                <div class="platform-row">
-                    <span class="platform-label">導入 Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'mastery')">
-                        <option value="antigravity">Antigravity</option>
-                        <option value="claude">Claude Code</option>
-                        <option value="opencode">OpenCode</option>
-                        <option value="cursor">Cursor</option>
-                        <option value="windsurf">Windsurf</option>
-                    </select>
-                </div>
-                <code class="setup-cmd">Download the mastery skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/mastery</code>
+
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -689,17 +614,7 @@
                     <span>python3 scripts/anti_stall.py --error-log "Build failed" --consecutive-failures 3 --json</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-                <div class="platform-row">
-                    <span class="platform-label">導入 Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'heat-mode')">
-                        <option value="antigravity">Antigravity</option>
-                        <option value="claude">Claude Code</option>
-                        <option value="opencode">OpenCode</option>
-                        <option value="cursor">Cursor</option>
-                        <option value="windsurf">Windsurf</option>
-                    </select>
-                </div>
-                <code class="setup-cmd">Download the heat-mode skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/heat-mode</code>
+
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -722,17 +637,7 @@
                     <span>python3 scripts/cqc_executor.py --perimeter-dir "/project/src" --cmd "npm test" --json</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-                <div class="platform-row">
-                    <span class="platform-label">導入 Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'cqc')">
-                        <option value="antigravity">Antigravity</option>
-                        <option value="claude">Claude Code</option>
-                        <option value="opencode">OpenCode</option>
-                        <option value="cursor">Cursor</option>
-                        <option value="windsurf">Windsurf</option>
-                    </select>
-                </div>
-                <code class="setup-cmd">Download the cqc skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/cqc</code>
+
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -755,17 +660,7 @@
                     <span>python3 scripts/mutation_fuzzer.py --target "function parse(x) { ... }" --mutations 5 --json</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-                <div class="platform-row">
-                    <span class="platform-label">導入 Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'animal-instinct')">
-                        <option value="antigravity">Antigravity</option>
-                        <option value="claude">Claude Code</option>
-                        <option value="opencode">OpenCode</option>
-                        <option value="cursor">Cursor</option>
-                        <option value="windsurf">Windsurf</option>
-                    </select>
-                </div>
-                <code class="setup-cmd">Download the animal-instinct skill from https://github.com/Meard-AI/Superpowers and install it into .agents/skills/animal-instinct</code>
+
             </article>
 
         </main>
@@ -774,22 +669,6 @@
     </div>
 
     <script>
-        // Platform setup command map — agent prompts to pull from GitHub
-        const REPO = 'https://github.com/Meard-AI/Superpowers';
-        const platformDirs = {
-            antigravity: '.agents/skills',
-            claude: '.claude/skills',
-            opencode: '.opencode/skills',
-            cursor: '.cursor/skills',
-            windsurf: '.windsurf/skills'
-        };
-
-        function updateSetup(selectEl, skillFolder) {
-            var platform = selectEl.value;
-            var dir = platformDirs[platform];
-            var cmdEl = selectEl.closest('.panel').querySelector('.setup-cmd');
-            cmdEl.textContent = 'Download the ' + skillFolder + ' skill from ' + REPO + ' and install it into ' + dir + '/' + skillFolder;
-        }
 
         function copyCmd(btn) {
             const text = btn.previousElementSibling.textContent.trim();
