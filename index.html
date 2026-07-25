@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE SUPERPOWERS -- Manga Archives</title>
+    <meta name="description" content="7 High-Performance Zero-Dependency Skills for Any AI Agent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        html { scroll-behavior: smooth; }
+
+        :root {
+            --bg: #f4f0ea;
+            --ink: #111113;
+            --ink-mid: #4a4a4f;
+            --ink-light: #8e8e93;
+            --panel: #faf7f2;
+            --red: #d9383a;
+            --code-bg: #1a1a1c;
+            --code-text: #e2e2e5;
+            --shadow: #111113;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0d0d0f;
+            --ink: #f0f0f3;
+            --ink-mid: #a0a0a5;
+            --ink-light: #6e6e73;
+            --panel: #141417;
+            --code-bg: #050506;
+            --code-text: #f0f0f3;
+            --shadow: #f0f0f3;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Noto Sans JP', 'Space Grotesk', sans-serif;
+            transition: background 0.4s, color 0.4s;
+            overflow-x: hidden;
+            line-height: 1.65;
+        }
+
+        .halftone {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-image: radial-gradient(var(--ink) 1px, transparent 1px);
+            background-size: 22px 22px;
+            opacity: 0.035;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .wrap {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 50px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* NAV */
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 4px solid var(--ink);
+            margin-bottom: 50px;
+            opacity: 0;
+        }
+
+        .logo-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.6rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .logo-sub {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--red);
+            letter-spacing: 0.12em;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: 2px solid var(--ink);
+            color: var(--ink);
+            padding: 7px 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background: var(--ink);
+            color: var(--bg);
+        }
+
+        /* COVER */
+        .cover {
+            border: 4px solid var(--ink);
+            background: var(--panel);
+            padding: 44px 32px;
+            margin-bottom: 70px;
+            position: relative;
+            box-shadow: 12px 12px 0 var(--shadow);
+            opacity: 0;
+        }
+
+        .cover-tag {
+            position: absolute;
+            top: -16px; left: 22px;
+            background: var(--red);
+            color: #fff;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.1rem;
+            padding: 1px 12px;
+            letter-spacing: 0.1em;
+        }
+
+        .cover h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            line-height: 0.95;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .cover p {
+            font-size: 1.1rem;
+            color: var(--ink-mid);
+            max-width: 680px;
+            font-weight: 600;
+        }
+
+        /* SLASH DIVIDERS */
+        .slash-divider {
+            display: flex;
+            justify-content: center;
+            padding: 24px 0;
+        }
+
+        .slash-divider svg {
+            width: 100%;
+            max-width: 700px;
+            height: 40px;
+            overflow: visible;
+        }
+
+        .slash-line {
+            stroke: var(--red);
+            stroke-width: 3;
+            fill: none;
+            stroke-linecap: round;
+        }
+
+        /* PANELS */
+        .grid { display: flex; flex-direction: column; gap: 0; }
+
+        .panel {
+            border: 4px solid var(--ink);
+            background: var(--panel);
+            padding: 36px;
+            position: relative;
+            box-shadow: 10px 10px 0 var(--shadow);
+            opacity: 0;
+        }
+
+        .panel-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            color: var(--red);
+            letter-spacing: 0.1em;
+            margin-bottom: 6px;
+            display: inline-block;
+            border-bottom: 2px solid var(--red);
+        }
+
+        .panel-jp {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--ink-light);
+            margin-left: 10px;
+            letter-spacing: 0.08em;
+        }
+
+        .panel-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .panel-headline {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+            font-style: italic;
+        }
+
+        .panel-body {
+            font-size: 0.95rem;
+            color: var(--ink-mid);
+            margin-bottom: 22px;
+        }
+
+        /* SPEECH BUBBLE */
+        .bubble {
+            border: 3px solid var(--ink);
+            background: var(--bg);
+            padding: 18px 22px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .bubble::before {
+            content: "";
+            position: absolute;
+            bottom: -13px; left: 32px;
+            border-width: 13px 13px 0 0;
+            border-style: solid;
+            border-color: var(--ink) transparent transparent transparent;
+        }
+
+        .bubble-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            color: var(--red);
+            letter-spacing: 0.08em;
+            margin-bottom: 5px;
+        }
+
+        .bubble-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .bubble-list li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .bubble-list li::before {
+            content: "+";
+            color: var(--red);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* CODE */
+        .code-box {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 16px 20px;
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            border-left: 4px solid var(--red);
+            overflow-x: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .copy-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .copy-btn:hover { background: var(--red); }
+
+        /* PLATFORM SELECTOR */
+        .platform-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .platform-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--ink-light);
+        }
+
+        .platform-select {
+            background: var(--code-bg);
+            color: var(--code-text);
+            border: 2px solid var(--ink);
+            padding: 5px 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .setup-cmd {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--red);
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: var(--code-bg);
+            border-left: 3px solid var(--ink-light);
+            display: block;
+        }
+
+        /* FOOTER */
+        footer {
+            margin-top: 80px;
+            text-align: center;
+            padding-top: 36px;
+            border-top: 4px solid var(--ink);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 0.1em;
+            color: var(--ink-light);
+        }
+
+        @media (max-width: 600px) {
+            .cover h1 { font-size: 2.6rem; }
+            .panel-title { font-size: 2.2rem; }
+            .panel { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="halftone"></div>
+    <div class="wrap">
+
+        <header class="nav">
+            <div>
+                <div class="logo-text">THE SUPERPOWERS</div>
+                <div class="logo-sub">資料集 VOL.01 -- SINGLE WORD EXECUTION</div>
+            </div>
+            <button class="toggle-btn" id="theme-toggle" onclick="toggleTheme()">紙 PAPER</button>
+        </header>
+
+        <section class="cover">
+            <div class="cover-tag">特別号 SPECIAL ISSUE</div>
+            <h1>SEVEN CAPABILITIES.<br>ZERO SLOP.</h1>
+            <p>高性能エージェント基盤 -- A minimalist reference for high-performance agent architecture. Single-word, zero-dependency tools designed for instant reflexes, path containment, and self-healing autonomy.</p>
+        </section>
+
+        <main class="grid">
+
+            <!-- ACT 01 -->
+            <article class="panel" data-skill="ultra-instinct">
+                <div class="panel-num">第一幕 ACT 01 // WARP<span class="panel-jp">反射経路</span></div>
+                <h2 class="panel-title">warp</h2>
+                <div class="panel-headline">"Bypass the 20-Second Pause. Execute Routine Tasks Instantly."</div>
+                <p class="panel-body">Intercepts simple subtasks (like status checks, formatting, or directory listing) and executes them deterministically in under 10 milliseconds via local pattern matching -- skipping heavy LLM reasoning loops entirely.</p>
+                <div class="bubble">
+                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
+                    <ul class="bubble-list">
+                        <li>70% reduction in LLM token expenditure</li>
+                        <li>Sub-10ms response time on routine terminal checks</li>
+                        <li>Automatic escalation to deep reasoning models when queries grow complex</li>
+                    </ul>
+                </div>
+                <div class="code-box">
+                    <span>python3 scripts/reflex_router.py --query "git status" --json</span>
+                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                </div>
+                <div class="platform-row">
+                    <span class="platform-label">導入 Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'ultra-instinct')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                    </select>
+                </div>
+                <code class="setup-cmd">cp -r ultra-instinct/ .agents/skills/</code>
+            </article>
+
+            <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
+
+            <!-- ACT 02 -->
+            <article class="panel" data-skill="copy-ability">
+                <div class="panel-num">第二幕 ACT 02 // CLONE<span class="panel-jp">複写能力</span></div>
+                <h2 class="panel-title">clone</h2>
+                <div class="panel-headline">"Observe Once. Replicate Forever."</div>
+                <p class="panel-body">Parses raw execution transcripts, terminal session logs, or API traces and automatically packages them into parameterised, reusable custom agent skills.</p>
+                <div class="bubble">
+                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
+                    <ul class="bubble-list">
+                        <li>Zero-code skill generation in under 3 seconds</li>
+                        <li>Eliminates prompt drift across multi-step commands</li>
+                        <li>Instant portability across any local or remote agent workspace</li>
+                    </ul>
+                </div>
+                <div class="code-box">
+                    <span>python3 scripts/trajectory_cloner.py --log trace.log --name deploy-prod --json</span>
+                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                </div>
+                <div class="platform-row">
+                    <span class="platform-label">導入 Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'copy-ability')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                    </select>
+                </div>
+                <code class="setup-cmd">cp -r copy-ability/ .agents/skills/</code>
+            </article>
+
+            <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
+
+            <!-- ACT 03 -->
+            <article class="panel" data-skill="invisible-attacks">
+                <div class="panel-num">第三幕 ACT 03 // FENCE<span class="panel-jp">境界防衛</span></div>
+                <h2 class="panel-title">fence</h2>
+                <div class="panel-headline">"Strict Air-Gapped Path Containment."</div>
+                <p class="panel-body">Calculates absolute canonical paths using realpath resolution and verifies file mutations against target root boundaries -- hard-blocking unauthorized directory escapes.</p>
+                <div class="bubble">
+                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
+                    <ul class="bubble-list">
+                        <li>100% boundary safety against accidental file overrides or path traversal</li>
+                        <li>Total isolation when running agents on production repositories</li>
+                        <li>Hard security block triggered prior to tool execution</li>
+                    </ul>
+                </div>
+                <div class="code-box">
+                    <span>python3 scripts/sandbox_enforcer.py --path "src/app.js" --allowed-root "/project" --json</span>
+                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                </div>
+                <div class="platform-row">
+                    <span class="platform-label">導入 Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'invisible-attacks')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                    </select>
+                </div>
+                <code class="setup-cmd">cp -r invisible-attacks/ .agents/skills/</code>
+            </article>
+
+            <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
+
+            <!-- ACT 04 -->
+            <article class="panel" data-skill="mastery">
+                <div class="panel-num">第四幕 ACT 04 // GEAR<span class="panel-jp">段階適応</span></div>
+                <h2 class="panel-title">gear</h2>
+                <div class="panel-headline">"Shift Operating Gears Mid-Flight."</div>
+                <p class="panel-body">Dynamically adapts system prompts, token budgets, and allowed toolsets based on the current project phase (plan, build, audit, format).</p>
+                <div class="bubble">
+                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
+                    <ul class="bubble-list">
+                        <li>Prevents context pollution by isolating active stage instructions</li>
+                        <li>Caps token budgets per phase to minimize context bloat</li>
+                        <li>Restricts write tools during audit or design phases</li>
+                    </ul>
+                </div>
+                <div class="code-box">
+                    <span>python3 scripts/context_adapter.py --stage audit --json</span>
+                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                </div>
+                <div class="platform-row">
+                    <span class="platform-label">導入 Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'mastery')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                    </select>
+                </div>
+                <code class="setup-cmd">cp -r mastery/ .agents/skills/</code>
+            </article>
+
+            <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
+
+            <!-- ACT 05 -->
+            <article class="panel" data-skill="heat-mode">
+                <div class="panel-num">第五幕 ACT 05 // RESCUE<span class="panel-jp">自己修復</span></div>
+                <h2 class="panel-title">rescue</h2>
+                <div class="panel-headline">"Break Infinite Apology and Failure Loops."</div>
+                <p class="panel-body">Monitors command streams for repetitive error patterns. When an agent stalls, it forces a self-healing protocol -- relaxing strict schemas and executing diagnostic fallbacks.</p>
+                <div class="bubble">
+                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
+                    <ul class="bubble-list">
+                        <li>Automatically breaks agent retry loops without human intervention</li>
+                        <li>Executes alternative CLI diagnostics to isolate root causes</li>
+                        <li>Guarantees long-running background agent tasks complete overnight</li>
+                    </ul>
+                </div>
+                <div class="code-box">
+                    <span>python3 scripts/anti_stall.py --error-log "Build failed" --consecutive-failures 3 --json</span>
+                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                </div>
+                <div class="platform-row">
+                    <span class="platform-label">導入 Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'heat-mode')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                    </select>
+                </div>
+                <code class="setup-cmd">cp -r heat-mode/ .agents/skills/</code>
+            </article>
+
+            <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
+
+            <!-- ACT 06 -->
+            <article class="panel" data-skill="cqc">
+                <div class="panel-num">第六幕 ACT 06 // JAIL<span class="panel-jp">領域制限</span></div>
+                <h2 class="panel-title">jail</h2>
+                <div class="panel-headline">"High-Speed Refactoring Inside a Locked Sub-Zone."</div>
+                <p class="panel-body">Grants agents high-frequency file editing privileges strictly inside a designated subdirectory while enforcing real-time perimeter checks on all subshell commands.</p>
+                <div class="bubble">
+                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
+                    <ul class="bubble-list">
+                        <li>Fast-path file refactoring inside isolated target folders</li>
+                        <li>Zero side-effect leakage to git roots or parent environments</li>
+                        <li>Clean subshell execution with structured JSON telemetry</li>
+                    </ul>
+                </div>
+                <div class="code-box">
+                    <span>python3 scripts/cqc_executor.py --perimeter-dir "/project/src" --cmd "npm test" --json</span>
+                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                </div>
+                <div class="platform-row">
+                    <span class="platform-label">導入 Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'cqc')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                    </select>
+                </div>
+                <code class="setup-cmd">cp -r cqc/ .agents/skills/</code>
+            </article>
+
+            <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
+
+            <!-- ACT 07 -->
+            <article class="panel" data-skill="animal-instinct">
+                <div class="panel-num">第七幕 ACT 07 // FUZZ<span class="panel-jp">突然変異</span></div>
+                <h2 class="panel-title">fuzz</h2>
+                <div class="panel-headline">"Genetic Payload Mutation and Bug Hunting."</div>
+                <p class="panel-body">Applies 5 genetic mutations (null byte injections, extreme unicode, format strings, boundary numbers) to code snippets or API payloads to uncover hidden crashes before production.</p>
+                <div class="bubble">
+                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
+                    <ul class="bubble-list">
+                        <li>Discovers boundary bugs and crash vectors missed by standard generation</li>
+                        <li>Validates software resilience against corrupted inputs</li>
+                        <li>Outputs instant vulnerability risk scores and crash logs</li>
+                    </ul>
+                </div>
+                <div class="code-box">
+                    <span>python3 scripts/mutation_fuzzer.py --target "function parse(x) { ... }" --mutations 5 --json</span>
+                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                </div>
+                <div class="platform-row">
+                    <span class="platform-label">導入 Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'animal-instinct')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                    </select>
+                </div>
+                <code class="setup-cmd">cp -r animal-instinct/ .agents/skills/</code>
+            </article>
+
+        </main>
+
+        <footer>THE SUPERPOWERS SUITE -- ZERO DEPENDENCIES -- ALL PYTHON 3 -- 終 END OF VOL. 01</footer>
+    </div>
+
+    <script>
+        // Platform setup command map
+        const platformPaths = {
+            antigravity: '.agents/skills/',
+            claude: '.claude/skills/',
+            opencode: '.opencode/skills/',
+            cursor: '.cursor/skills/',
+            windsurf: '.windsurf/skills/'
+        };
+
+        function updateSetup(selectEl, skillFolder) {
+            const platform = selectEl.value;
+            const cmdEl = selectEl.closest('.panel').querySelector('.setup-cmd');
+            cmdEl.textContent = 'cp -r ' + skillFolder + '/ ' + platformPaths[platform];
+        }
+
+        function copyCmd(btn) {
+            const text = btn.previousElementSibling.textContent.trim();
+            navigator.clipboard.writeText(text);
+            btn.textContent = 'DONE';
+            setTimeout(() => { btn.textContent = 'COPY'; }, 1200);
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('theme-toggle');
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                btn.textContent = '紙 PAPER';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btn.textContent = '墨 INK';
+            }
+            anime({
+                targets: '.wrap',
+                scale: [0.99, 1],
+                opacity: [0.88, 1],
+                duration: 300,
+                easing: 'easeInOutQuad'
+            });
+        }
+
+        // -- ANIME.JS ANIMATIONS --
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // 1. Timeline intro reveal
+            var intro = anime.timeline({ easing: 'easeOutExpo' });
+
+            intro
+            .add({
+                targets: '.nav',
+                translateY: [-28, 0],
+                opacity: [0, 1],
+                duration: 700
+            })
+            .add({
+                targets: '.cover',
+                translateY: [24, 0],
+                scale: [0.97, 1],
+                opacity: [0, 1],
+                duration: 800
+            }, '-=350');
+
+            // 2. Scroll-triggered panel animations using IntersectionObserver
+            var panelObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        anime({
+                            targets: entry.target,
+                            translateY: [50, 0],
+                            opacity: [0, 1],
+                            duration: 750,
+                            easing: 'easeOutCubic'
+                        });
+                        panelObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            document.querySelectorAll('.panel').forEach(function(p) {
+                panelObserver.observe(p);
+            });
+
+            // 3. Sword slash SVG animations on scroll (strokeDashoffset)
+            document.querySelectorAll('.slash-line').forEach(function(line) {
+                var length = line.getTotalLength();
+                line.style.strokeDasharray = length;
+                line.style.strokeDashoffset = length;
+            });
+
+            var slashObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        var line = entry.target.querySelector('.slash-line');
+                        if (line) {
+                            var length = line.getTotalLength();
+                            anime({
+                                targets: line,
+                                strokeDashoffset: [length, 0],
+                                duration: 600,
+                                easing: 'easeInOutQuart'
+                            });
+                        }
+                        slashObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            document.querySelectorAll('.slash-divider').forEach(function(d) {
+                slashObserver.observe(d);
+            });
+
+            // 4. Interactive panel hover micro-animations
+            document.querySelectorAll('.panel').forEach(function(panel) {
+                panel.addEventListener('mouseenter', function() {
+                    anime({
+                        targets: panel,
+                        translateY: -6,
+                        boxShadow: '14px 14px 0px var(--shadow)',
+                        duration: 220,
+                        easing: 'easeOutQuad'
+                    });
+                });
+                panel.addEventListener('mouseleave', function() {
+                    anime({
+                        targets: panel,
+                        translateY: 0,
+                        boxShadow: '10px 10px 0px var(--shadow)',
+                        duration: 220,
+                        easing: 'easeOutQuad'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

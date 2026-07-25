@@ -1,0 +1,32 @@
+[
+  {
+    "pattern": "(?i).*(lint|check format|style|flake8|pylint|rubocop|eslint).*",
+    "command": "flake8 .",
+    "description": "Run standard linter check",
+    "confidence": 0.95
+  },
+  {
+    "pattern": "(?i).*(run test|pytest|unit test|test suite|npm test).*",
+    "command": "python3 -m unittest discover -s tests",
+    "description": "Run unit test suite",
+    "confidence": 0.9
+  },
+  {
+    "pattern": "(?i).*(git status|repo status|check status|git diff).*",
+    "command": "git status --short",
+    "description": "Check git repository state",
+    "confidence": 0.95
+  },
+  {
+    "pattern": "(?i).*(python --version|node --version|cat package.json|ls -la).*",
+    "command": "sys_info",
+    "description": "System environment inspection",
+    "confidence": 0.98
+  },
+  {
+    "pattern": "(?i).*lint.*",
+    "command": "flake8 .",
+    "description": "Custom route for pattern '(?i).*lint.*'",
+    "confidence": 0.95
+  }
+]

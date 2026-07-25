@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE SUPERPOWERS — Manga Archives</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Official Anime.js v3 CDN (animejs.com/documentation) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+
+    <style>
+        :root {
+            --bg-paper: #f4f0ea;
+            --ink-black: #111113;
+            --ink-gray: #4a4a4f;
+            --ink-light: #8e8e93;
+            --border-ink: #111113;
+            --accent-red: #d9383a;
+            --panel-bg: #faf7f2;
+            --code-bg: #1a1a1c;
+            --code-text: #e2e2e5;
+        }
+
+        [data-theme="dark"] {
+            --bg-paper: #0d0d0f;
+            --ink-black: #f0f0f3;
+            --ink-gray: #a0a0a5;
+            --ink-light: #6e6e73;
+            --border-ink: #f0f0f3;
+            --panel-bg: #141417;
+            --code-bg: #050506;
+            --code-text: #f0f0f3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-paper);
+            color: var(--ink-black);
+            font-family: 'Space Grotesk', 'Noto Sans JP', sans-serif;
+            transition: background-color 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Manga Halftone Texture */
+        .halftone-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: radial-gradient(var(--ink-black) 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Header Navigation */
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 4px solid var(--border-ink);
+            margin-bottom: 60px;
+            opacity: 0;
+        }
+
+        .manga-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .subtitle-jp {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            letter-spacing: 0.15em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .theme-btn {
+            background: transparent;
+            border: 2px solid var(--border-ink);
+            color: var(--ink-black);
+            padding: 8px 16px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            background-color: var(--border-ink);
+            color: var(--bg-paper);
+        }
+
+        /* Cover Section */
+        .cover-box {
+            border: 4px solid var(--border-ink);
+            background-color: var(--panel-bg);
+            padding: 48px 36px;
+            margin-bottom: 80px;
+            position: relative;
+            box-shadow: 12px 12px 0px var(--border-ink);
+            opacity: 0;
+        }
+
+        .issue-tag {
+            position: absolute;
+            top: -18px;
+            left: 24px;
+            background-color: var(--accent-red);
+            color: #ffffff;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            padding: 2px 14px;
+            letter-spacing: 0.1em;
+        }
+
+        .cover-heading {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4.5rem;
+            line-height: 0.95;
+            letter-spacing: 0.04em;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .cover-desc {
+            font-size: 1.15rem;
+            color: var(--ink-gray);
+            max-width: 720px;
+            font-weight: 600;
+        }
+
+        /* Manga Panel List */
+        .manga-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
+        }
+
+        .panel-item {
+            border: 4px solid var(--border-ink);
+            background-color: var(--panel-bg);
+            padding: 40px;
+            position: relative;
+            box-shadow: 10px 10px 0px var(--border-ink);
+            opacity: 0;
+        }
+
+        .panel-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: var(--accent-red);
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+            display: inline-block;
+            border-bottom: 2px solid var(--accent-red);
+        }
+
+        .panel-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.2rem;
+            letter-spacing: 0.05em;
+            line-height: 1;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .panel-headline {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--ink-black);
+            margin-bottom: 16px;
+            font-style: italic;
+        }
+
+        .panel-body {
+            font-size: 1rem;
+            color: var(--ink-gray);
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+
+        /* Speech Bubble Result Callout */
+        .speech-bubble {
+            border: 3px solid var(--border-ink);
+            background-color: var(--bg-paper);
+            padding: 20px 24px;
+            margin-bottom: 28px;
+            position: relative;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .speech-bubble::before {
+            content: "";
+            position: absolute;
+            bottom: -14px;
+            left: 36px;
+            border-width: 14px 14px 0 0;
+            border-style: solid;
+            border-color: var(--border-ink) transparent transparent transparent;
+        }
+
+        .bubble-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.1rem;
+            color: var(--accent-red);
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+
+        .impact-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .impact-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .impact-list li::before {
+            content: "+";
+            color: var(--accent-red);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* Code Frame */
+        .code-frame {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 18px 22px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            border-left: 4px solid var(--accent-red);
+            overflow-x: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-code-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #ffffff;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s ease;
+        }
+
+        .copy-code-btn:hover {
+            background: var(--accent-red);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 100px;
+            text-align: center;
+            padding-top: 40px;
+            border-top: 4px solid var(--border-ink);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            color: var(--ink-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="halftone-bg"></div>
+
+    <div class="container">
+        <!-- Navigation Header -->
+        <header class="nav-header">
+            <div>
+                <div class="manga-title">THE SUPERPOWERS</div>
+                <div class="subtitle-jp">ARCHIVE VOL. 01 — SINGLE WORD EXECUTION</div>
+            </div>
+            <div class="controls">
+                <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()">PAPER MODE</button>
+            </div>
+        </header>
+
+        <!-- Cover Header -->
+        <section class="cover-box">
+            <div class="issue-tag">SPECIAL ISSUE</div>
+            <h1 class="cover-heading">SEVEN CAPABILITIES.<br>ZERO SLOP.</h1>
+            <p class="cover-desc">
+                A minimalist reference for high-performance agent architecture. Single-word, zero-dependency tools designed for instant reflexes, path containment, and self-healing autonomy.
+            </p>
+        </section>
+
+        <!-- Manga Panels Grid -->
+        <main class="manga-grid">
+
+            <!-- Panel 1: WARP -->
+            <article class="panel-item">
+                <div class="panel-number">ACT 01 // WARP</div>
+                <h2 class="panel-title">warp</h2>
+                <div class="panel-headline">"Bypass the 20-Second Pause. Execute Routine Tasks Instantly."</div>
+                <p class="panel-body">
+                    Intercepts simple subtasks (like status checks, formatting, or directory listing) and executes them deterministically in under 10 milliseconds via local pattern matching—skipping heavy LLM reasoning loops entirely.
+                </p>
+                <div class="speech-bubble">
+                    <div class="bubble-label">TACTICAL OUTCOME</div>
+                    <ul class="impact-list">
+                        <li>70% reduction in LLM token expenditure</li>
+                        <li>Sub-10ms response time on routine terminal checks</li>
+                        <li>Automatic escalation to deep reasoning models when queries grow complex</li>
+                    </ul>
+                </div>
+                <div class="code-frame">
+                    <span>python3 scripts/reflex_router.py --query "git status" --json</span>
+                    <button class="copy-code-btn" onclick="copyText('python3 scripts/reflex_router.py --query \"git status\" --json')">COPY</button>
+                </div>
+            </article>
+
+            <!-- Panel 2: CLONE -->
+            <article class="panel-item">
+                <div class="panel-number">ACT 02 // CLONE</div>
+                <h2 class="panel-title">clone</h2>
+                <div class="panel-headline">"Observe Once. Replicate Forever."</div>
+                <p class="panel-body">
+                    Parses raw execution transcripts, terminal session logs, or API traces and automatically packages them into parameterised, reusable custom agent skills.
+                </p>
+                <div class="speech-bubble">
+                    <div class="bubble-label">TACTICAL OUTCOME</div>
+                    <ul class="impact-list">
+                        <li>Zero-code skill generation in under 3 seconds</li>
+                        <li>Eliminates prompt drift across multi-step commands</li>
+                        <li>Instant portability across any local or remote agent workspace</li>
+                    </ul>
+                </div>
+                <div class="code-frame">
+                    <span>python3 scripts/trajectory_cloner.py --log trace.log --name deploy-prod --json</span>
+                    <button class="copy-code-btn" onclick="copyText('python3 scripts/trajectory_cloner.py --log trace.log --name deploy-prod --json')">COPY</button>
+                </div>
+            </article>
+
+            <!-- Panel 3: FENCE -->
+            <article class="panel-item">
+                <div class="panel-number">ACT 03 // FENCE</div>
+                <h2 class="panel-title">fence</h2>
+                <div class="panel-headline">"Strict Air-Gapped Path Containment."</div>
+                <p class="panel-body">
+                    Calculates absolute canonical paths using realpath resolution and verifies file mutations against target root boundaries—hard-blocking unauthorized directory escapes.
+                </p>
+                <div class="speech-bubble">
+                    <div class="bubble-label">TACTICAL OUTCOME</div>
+                    <ul class="impact-list">
+                        <li>100% boundary safety against accidental file overrides or path traversal</li>
+                        <li>Total isolation when running agents on production repositories</li>
+                        <li>Hard security block triggered prior to tool execution</li>
+                    </ul>
+                </div>
+                <div class="code-frame">
+                    <span>python3 scripts/sandbox_enforcer.py --path "src/app.js" --allowed-root "/project" --json</span>
+                    <button class="copy-code-btn" onclick="copyText('python3 scripts/sandbox_enforcer.py --path \"src/app.js\" --allowed-root \"/project\" --json')">COPY</button>
+                </div>
+            </article>
+
+            <!-- Panel 4: GEAR -->
+            <article class="panel-item">
+                <div class="panel-number">ACT 04 // GEAR</div>
+                <h2 class="panel-title">gear</h2>
+                <div class="panel-headline">"Shift Operating Gears Mid-Flight."</div>
+                <p class="panel-body">
+                    Dynamically adapts system prompts, token budgets, and allowed toolsets based on the current project phase (plan → build → audit → format).
+                </p>
+                <div class="speech-bubble">
+                    <div class="bubble-label">TACTICAL OUTCOME</div>
+                    <ul class="impact-list">
+                        <li>Prevents context pollution by isolating active stage instructions</li>
+                        <li>Caps token budgets per phase to minimize context bloat</li>
+                        <li>Restricts write tools during audit or design phases</li>
+                    </ul>
+                </div>
+                <div class="code-frame">
+                    <span>python3 scripts/context_adapter.py --stage audit --json</span>
+                    <button class="copy-code-btn" onclick="copyText('python3 scripts/context_adapter.py --stage audit --json')">COPY</button>
+                </div>
+            </article>
+
+            <!-- Panel 5: RESCUE -->
+            <article class="panel-item">
+                <div class="panel-number">ACT 05 // RESCUE</div>
+                <h2 class="panel-title">rescue</h2>
+                <div class="panel-headline">"Break Infinite Apology and Failure Loops."</div>
+                <p class="panel-body">
+                    Monitors command streams for repetitive error patterns. When an agent stalls, it forces a self-healing protocol—relaxing strict schemas and executing diagnostic fallbacks.
+                </p>
+                <div class="speech-bubble">
+                    <div class="bubble-label">TACTICAL OUTCOME</div>
+                    <ul class="impact-list">
+                        <li>Automatically breaks agent retry loops without human intervention</li>
+                        <li>Executes alternative CLI diagnostics to isolate root causes</li>
+                        <li>Guarantees long-running background agent tasks complete overnight</li>
+                    </ul>
+                </div>
+                <div class="code-frame">
+                    <span>python3 scripts/anti_stall.py --error-log "Build failed" --consecutive-failures 3 --json</span>
+                    <button class="copy-code-btn" onclick="copyText('python3 scripts/anti_stall.py --error-log \"Build failed\" --consecutive-failures 3 --json')">COPY</button>
+                </div>
+            </article>
+
+            <!-- Panel 6: JAIL -->
+            <article class="panel-item">
+                <div class="panel-number">ACT 06 // JAIL</div>
+                <h2 class="panel-title">jail</h2>
+                <div class="panel-headline">"High-Speed Refactoring Inside a Locked Sub-Zone."</div>
+                <p class="panel-body">
+                    Grants agents high-frequency file editing privileges strictly inside a designated subdirectory while enforcing real-time perimeter checks on all subshell commands.
+                </p>
+                <div class="speech-bubble">
+                    <div class="bubble-label">TACTICAL OUTCOME</div>
+                    <ul class="impact-list">
+                        <li>Fast-path file refactoring inside isolated target folders</li>
+                        <li>Zero side-effect leakage to git roots or parent environments</li>
+                        <li>Clean subshell execution with structured JSON telemetry</li>
+                    </ul>
+                </div>
+                <div class="code-frame">
+                    <span>python3 scripts/cqc_executor.py --perimeter-dir "/project/src" --cmd "npm test" --json</span>
+                    <button class="copy-code-btn" onclick="copyText('python3 scripts/cqc_executor.py --perimeter-dir \"/project/src\" --cmd \"npm test\" --json')">COPY</button>
+                </div>
+            </article>
+
+            <!-- Panel 7: FUZZ -->
+            <article class="panel-item">
+                <div class="panel-number">ACT 07 // FUZZ</div>
+                <h2 class="panel-title">fuzz</h2>
+                <div class="panel-headline">"Genetic Payload Mutation & Bug Hunting."</div>
+                <p class="panel-body">
+                    Applies 5 genetic mutations (null byte injections, extreme unicode, format strings, boundary numbers) to code snippets or API payloads to uncover hidden crashes before production.
+                </p>
+                <div class="speech-bubble">
+                    <div class="bubble-label">TACTICAL OUTCOME</div>
+                    <ul class="impact-list">
+                        <li>Discovers boundary bugs and crash vectors missed by standard generation</li>
+                        <li>Validates software resilience against corrupted inputs</li>
+                        <li>Outputs instant vulnerability risk scores and crash logs</li>
+                    </ul>
+                </div>
+                <div class="code-frame">
+                    <span>python3 scripts/mutation_fuzzer.py --target "function parse(x) { ... }" --mutations 5 --json</span>
+                    <button class="copy-code-btn" onclick="copyText('python3 scripts/mutation_fuzzer.py --target \"function parse(x) { ... }\" --mutations 5 --json')">COPY</button>
+                </div>
+            </article>
+
+        </main>
+
+        <footer>
+            THE SUPERPOWERS SUITE — ZERO SLOP • ALL PYTHON 3 • END OF VOL. 01
+        </footer>
+    </div>
+
+    <!-- Official Anime.js v3 API Animation Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Anime.js Timeline for Page Intro Reveal (per animejs.com/documentation/#timeline)
+            const pageTimeline = anime.timeline({
+                easing: 'easeOutExpo'
+            });
+
+            pageTimeline
+            .add({
+                targets: '.nav-header',
+                translateY: [-30, 0],
+                opacity: [0, 1],
+                duration: 700
+            })
+            .add({
+                targets: '.cover-box',
+                translateY: [20, 0],
+                scale: [0.97, 1],
+                opacity: [0, 1],
+                duration: 800
+            }, '-=400');
+
+            // Anime.js Stagger Animation for Manga Panels (per animejs.com/documentation/#stagger)
+            anime({
+                targets: '.panel-item',
+                translateY: [50, 0],
+                opacity: [0, 1],
+                delay: anime.stagger(140, {start: 500}),
+                duration: 800,
+                easing: 'easeOutCubic'
+            });
+
+            // Anime.js Interactive Micro-animations on Hover
+            document.querySelectorAll('.panel-item').forEach(panel => {
+                panel.addEventListener('mouseenter', () => {
+                    anime({
+                        targets: panel,
+                        translateY: -8,
+                        boxShadow: '16px 16px 0px var(--border-ink)',
+                        duration: 250,
+                        easing: 'easeOutQuad'
+                    });
+                });
+
+                panel.addEventListener('mouseleave', () => {
+                    anime({
+                        targets: panel,
+                        translateY: 0,
+                        boxShadow: '10px 10px 0px var(--border-ink)',
+                        duration: 250,
+                        easing: 'easeOutQuad'
+                    });
+                });
+            });
+        });
+
+        // Theme Toggle burst animation
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                btn.textContent = 'PAPER MODE';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btn.textContent = 'INK MODE';
+            }
+
+            // Anime.js transition burst (per animejs.com/documentation)
+            anime({
+                targets: '.container',
+                scale: [0.99, 1],
+                opacity: [0.85, 1],
+                duration: 350,
+                easing: 'easeInOutQuad'
+            });
+        }
+
+        // Copy text helper
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            alert('Copied to clipboard: ' + text);
+        }
+    </script>
+</body>
+</html>
