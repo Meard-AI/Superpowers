@@ -9,8 +9,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/darkroomengineering/lenis@1.1.13/dist/lenis.min.js"></script>
     <style>
-        html { scroll-behavior: smooth; }
+        html.lenis, html.lenis body { height: auto; }
+        .lenis.lenis-smooth { scroll-behavior: auto; }
+        .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+        .lenis.lenis-stopped { overflow: hidden; }
 
         :root {
             --bg: #f4f0ea;
@@ -103,6 +107,12 @@
             text-transform: uppercase;
             letter-spacing: 0.04em;
             transition: all 0.2s;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .toggle-btn:hover {
@@ -304,7 +314,52 @@
         .copy-btn:hover { background: var(--red); }
 
         /* PLATFORM SELECTOR */
+        .platform-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
 
+        .platform-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--ink-light);
+        }
+
+        .platform-select {
+            background: var(--code-bg);
+            color: var(--code-text);
+            border: 2px solid var(--ink);
+            padding: 5px 10px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .setup-cmd {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--code-text);
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: var(--code-bg);
+            border-left: 4px solid var(--red);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .setup-cmd span {
+            flex: 1;
+            word-break: break-all;
+        }
 
         /* FOOTER */
         footer {
@@ -485,7 +540,7 @@
     <div class="tear-label" id="tearLabel">引き裂く SCROLL TO TEAR</div>
 
     <div class="halftone"></div>
-    <div style="height:100vh"></div>
+    <div style="height:300px"></div>
     <div class="wrap">
 
         <header class="nav">
@@ -493,7 +548,10 @@
                 <div class="logo-text">THE SUPERPOWERS</div>
                 <div class="logo-sub">資料集 VOL.01 -- SINGLE WORD EXECUTION</div>
             </div>
-            <button class="toggle-btn" id="theme-toggle" onclick="toggleTheme()">紙 PAPER</button>
+            <div class="nav-controls">
+                <button class="toggle-btn" id="sound-toggle" onclick="toggleSound()" aria-label="Toggle ambient sound">音 UNMUTE</button>
+                <button class="toggle-btn" id="theme-toggle" onclick="toggleTheme()">紙 PAPER</button>
+            </div>
         </header>
 
         <section class="cover">
@@ -506,46 +564,50 @@
 
             <!-- ACT 01 -->
             <article class="panel" data-skill="ultra-instinct">
-                <div class="panel-num">第一幕 ACT 01 // WARP<span class="panel-jp">反射経路</span></div>
-                <h2 class="panel-title">warp</h2>
+                <div class="panel-num">第一幕 ACT 01 // ULTRA INSTINCT<span class="panel-jp">反射経路</span></div>
+                <h2 class="panel-title">ultra instinct</h2>
                 <div class="panel-headline">"Bypass the 20-Second Pause. Execute Routine Tasks Instantly."</div>
                 <p class="panel-body">Intercepts simple subtasks (like status checks, formatting, or directory listing) and executes them deterministically in under 10 milliseconds via local pattern matching -- skipping heavy LLM reasoning loops entirely.</p>
-                <div class="bubble">
-                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
-                    <ul class="bubble-list">
-                        <li>70% reduction in LLM token expenditure</li>
-                        <li>Sub-10ms response time on routine terminal checks</li>
-                        <li>Automatic escalation to deep reasoning models when queries grow complex</li>
-                    </ul>
+                <div class="platform-row">
+                    <span class="platform-label">Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'ultra-instinct')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="other">Others</option>
+                    </select>
                 </div>
-                <div class="code-box">
-                    <span>python3 scripts/reflex_router.py --query "git status" --json</span>
+                <div class="setup-cmd">
+                    <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'ultra-instinct' skill folder into .agents/skills/ultra-instinct at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
 
             <!-- ACT 02 -->
             <article class="panel" data-skill="copy-ability">
-                <div class="panel-num">第二幕 ACT 02 // CLONE<span class="panel-jp">複写能力</span></div>
-                <h2 class="panel-title">clone</h2>
+                <div class="panel-num">第二幕 ACT 02 // COPY<span class="panel-jp">複写能力</span></div>
+                <h2 class="panel-title">copy</h2>
                 <div class="panel-headline">"Observe Once. Replicate Forever."</div>
                 <p class="panel-body">Parses raw execution transcripts, terminal session logs, or API traces and automatically packages them into parameterised, reusable custom agent skills.</p>
-                <div class="bubble">
-                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
-                    <ul class="bubble-list">
-                        <li>Zero-code skill generation in under 3 seconds</li>
-                        <li>Eliminates prompt drift across multi-step commands</li>
-                        <li>Instant portability across any local or remote agent workspace</li>
-                    </ul>
+                <div class="platform-row">
+                    <span class="platform-label">Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'copy-ability')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="other">Others</option>
+                    </select>
                 </div>
-                <div class="code-box">
-                    <span>python3 scripts/trajectory_cloner.py --log trace.log --name deploy-prod --json</span>
+                <div class="setup-cmd">
+                    <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'copy-ability' skill folder into .agents/skills/copy-ability at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -556,19 +618,21 @@
                 <h2 class="panel-title">fence</h2>
                 <div class="panel-headline">"Strict Air-Gapped Path Containment."</div>
                 <p class="panel-body">Calculates absolute canonical paths using realpath resolution and verifies file mutations against target root boundaries -- hard-blocking unauthorized directory escapes.</p>
-                <div class="bubble">
-                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
-                    <ul class="bubble-list">
-                        <li>100% boundary safety against accidental file overrides or path traversal</li>
-                        <li>Total isolation when running agents on production repositories</li>
-                        <li>Hard security block triggered prior to tool execution</li>
-                    </ul>
+                <div class="platform-row">
+                    <span class="platform-label">Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'invisible-attacks')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="other">Others</option>
+                    </select>
                 </div>
-                <div class="code-box">
-                    <span>python3 scripts/sandbox_enforcer.py --path "src/app.js" --allowed-root "/project" --json</span>
+                <div class="setup-cmd">
+                    <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'invisible-attacks' skill folder into .agents/skills/invisible-attacks at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -579,42 +643,46 @@
                 <h2 class="panel-title">gear</h2>
                 <div class="panel-headline">"Shift Operating Gears Mid-Flight."</div>
                 <p class="panel-body">Dynamically adapts system prompts, token budgets, and allowed toolsets based on the current project phase (plan, build, audit, format).</p>
-                <div class="bubble">
-                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
-                    <ul class="bubble-list">
-                        <li>Prevents context pollution by isolating active stage instructions</li>
-                        <li>Caps token budgets per phase to minimize context bloat</li>
-                        <li>Restricts write tools during audit or design phases</li>
-                    </ul>
+                <div class="platform-row">
+                    <span class="platform-label">Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'mastery')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="other">Others</option>
+                    </select>
                 </div>
-                <div class="code-box">
-                    <span>python3 scripts/context_adapter.py --stage audit --json</span>
+                <div class="setup-cmd">
+                    <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'mastery' skill folder into .agents/skills/mastery at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
 
             <!-- ACT 05 -->
             <article class="panel" data-skill="heat-mode">
-                <div class="panel-num">第五幕 ACT 05 // RESCUE<span class="panel-jp">自己修復</span></div>
-                <h2 class="panel-title">rescue</h2>
+                <div class="panel-num">第五幕 ACT 05 // HEAT MODE<span class="panel-jp">自己修復</span></div>
+                <h2 class="panel-title">heat mode</h2>
                 <div class="panel-headline">"Break Infinite Apology and Failure Loops."</div>
                 <p class="panel-body">Monitors command streams for repetitive error patterns. When an agent stalls, it forces a self-healing protocol -- relaxing strict schemas and executing diagnostic fallbacks.</p>
-                <div class="bubble">
-                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
-                    <ul class="bubble-list">
-                        <li>Automatically breaks agent retry loops without human intervention</li>
-                        <li>Executes alternative CLI diagnostics to isolate root causes</li>
-                        <li>Guarantees long-running background agent tasks complete overnight</li>
-                    </ul>
+                <div class="platform-row">
+                    <span class="platform-label">Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'heat-mode')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="other">Others</option>
+                    </select>
                 </div>
-                <div class="code-box">
-                    <span>python3 scripts/anti_stall.py --error-log "Build failed" --consecutive-failures 3 --json</span>
+                <div class="setup-cmd">
+                    <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'heat-mode' skill folder into .agents/skills/heat-mode at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="0" y1="38" x2="700" y2="2"/></svg></div>
@@ -625,19 +693,21 @@
                 <h2 class="panel-title">jail</h2>
                 <div class="panel-headline">"High-Speed Refactoring Inside a Locked Sub-Zone."</div>
                 <p class="panel-body">Grants agents high-frequency file editing privileges strictly inside a designated subdirectory while enforcing real-time perimeter checks on all subshell commands.</p>
-                <div class="bubble">
-                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
-                    <ul class="bubble-list">
-                        <li>Fast-path file refactoring inside isolated target folders</li>
-                        <li>Zero side-effect leakage to git roots or parent environments</li>
-                        <li>Clean subshell execution with structured JSON telemetry</li>
-                    </ul>
+                <div class="platform-row">
+                    <span class="platform-label">Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'cqc')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="other">Others</option>
+                    </select>
                 </div>
-                <div class="code-box">
-                    <span>python3 scripts/cqc_executor.py --perimeter-dir "/project/src" --cmd "npm test" --json</span>
+                <div class="setup-cmd">
+                    <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'cqc' skill folder into .agents/skills/cqc at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-
             </article>
 
             <div class="slash-divider"><svg viewBox="0 0 700 40"><line class="slash-line" x1="700" y1="38" x2="0" y2="2"/></svg></div>
@@ -648,19 +718,21 @@
                 <h2 class="panel-title">fuzz</h2>
                 <div class="panel-headline">"Genetic Payload Mutation and Bug Hunting."</div>
                 <p class="panel-body">Applies 5 genetic mutations (null byte injections, extreme unicode, format strings, boundary numbers) to code snippets or API payloads to uncover hidden crashes before production.</p>
-                <div class="bubble">
-                    <div class="bubble-label">戦術結果 TACTICAL OUTCOME</div>
-                    <ul class="bubble-list">
-                        <li>Discovers boundary bugs and crash vectors missed by standard generation</li>
-                        <li>Validates software resilience against corrupted inputs</li>
-                        <li>Outputs instant vulnerability risk scores and crash logs</li>
-                    </ul>
+                <div class="platform-row">
+                    <span class="platform-label">Setup for:</span>
+                    <select class="platform-select" onchange="updateSetup(this, 'animal-instinct')">
+                        <option value="antigravity">Antigravity</option>
+                        <option value="claude">Claude Code</option>
+                        <option value="opencode">OpenCode</option>
+                        <option value="cursor">Cursor</option>
+                        <option value="windsurf">Windsurf</option>
+                        <option value="other">Others</option>
+                    </select>
                 </div>
-                <div class="code-box">
-                    <span>python3 scripts/mutation_fuzzer.py --target "function parse(x) { ... }" --mutations 5 --json</span>
+                <div class="setup-cmd">
+                    <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'animal-instinct' skill folder into .agents/skills/animal-instinct at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
                     <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
                 </div>
-
             </article>
 
         </main>
@@ -669,6 +741,42 @@
     </div>
 
     <script>
+
+        // Per-agent install instructions. Paths verified against each tool's
+        // own current convention -- these are NOT identical, despite the
+        // repo shipping one path for all of them.
+        const AGENT_SETUP = {
+            antigravity: {
+                label: 'Antigravity',
+                cmd: (skill) => `Clone https://github.com/Meard-AI/Superpowers and copy the '${skill}' skill folder into .agents/skills/${skill} at your workspace root -- Antigravity auto-discovers it from there, no restart needed.`
+            },
+            claude: {
+                label: 'Claude Code',
+                cmd: (skill) => `Clone https://github.com/Meard-AI/Superpowers and copy the '${skill}' skill folder into .claude/skills/${skill} (project) or ~/.claude/skills/${skill} (personal, all projects) -- Claude Code loads it automatically when relevant.`
+            },
+            opencode: {
+                label: 'OpenCode',
+                cmd: (skill) => `Clone https://github.com/Meard-AI/Superpowers and copy the '${skill}' skill folder into .opencode/skills/${skill} -- OpenCode also reads .claude/skills/ and .agents/skills/ if you'd rather share paths across tools.`
+            },
+            cursor: {
+                label: 'Cursor',
+                cmd: (skill) => `Clone https://github.com/Meard-AI/Superpowers and copy the '${skill}' skill folder into .cursor/skills/${skill} -- Cursor also reads .agents/skills/ and .claude/skills/, so this works even if another agent already put it there.`
+            },
+            windsurf: {
+                label: 'Windsurf',
+                cmd: (skill) => `Clone https://github.com/Meard-AI/Superpowers and copy the '${skill}' skill folder into .windsurf/skills/${skill} in your project -- Cascade picks it up on the next session (reload the workspace after adding it).`
+            },
+            other: {
+                label: 'Others',
+                cmd: (skill) => `Clone https://github.com/Meard-AI/Superpowers and copy the '${skill}' skill folder into .agents/skills/${skill} -- this is the emerging cross-tool convention; check your agent's docs if it doesn't pick it up automatically.`
+            }
+        };
+
+        function updateSetup(selectEl, skill) {
+            const agent = AGENT_SETUP[selectEl.value] || AGENT_SETUP.other;
+            const setupCmdEl = selectEl.closest('.panel').querySelector('.setup-cmd span');
+            setupCmdEl.textContent = agent.cmd(skill);
+        }
 
         function copyCmd(btn) {
             const text = btn.previousElementSibling.textContent.trim();
@@ -696,9 +804,174 @@
             });
         }
 
+        // -- AMBIENT SOUND ENGINE --
+        // Generative pad, not a recording -- no external audio file, no
+        // licensing question. Browsers block audio before a user gesture,
+        // so this arms on the first click/keypress/scroll and then plays
+        // continuously until muted. Also tries to start immediately in
+        // case the browser's autoplay heuristics allow it (e.g. after a
+        // prior visit) -- if that throws, the gesture listener catches it.
+
+        let audioCtx = null;
+        let masterGain = null;
+        let ambientNodes = [];
+        let soundStarted = false;
+        let soundMuted = false;
+
+        function buildAmbientPad() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0; // fade in below
+            masterGain.connect(audioCtx.destination);
+
+            // Soft lowpass so nothing here reads as a "tone" or melody --
+            // just warm, breathing air.
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 900;
+            filter.Q.value = 0.3;
+            filter.connect(masterGain);
+
+            // Filter LFO -- slow, so the pad seems to breathe rather than
+            // sit static.
+            const filterLFO = audioCtx.createOscillator();
+            filterLFO.frequency.value = 0.06;
+            const filterLFOGain = audioCtx.createGain();
+            filterLFOGain.gain.value = 220;
+            filterLFO.connect(filterLFOGain);
+            filterLFOGain.connect(filter.frequency);
+            filterLFO.start();
+
+            // A soft, slow delay for width/depth without needing an
+            // impulse-response file (no external reverb asset either).
+            const delay = audioCtx.createDelay(2.0);
+            delay.delayTime.value = 0.6;
+            const feedback = audioCtx.createGain();
+            feedback.gain.value = 0.35;
+            delay.connect(feedback);
+            feedback.connect(delay);
+            filter.connect(delay);
+            delay.connect(masterGain);
+
+            // Layered detuned oscillators, a minor-leaning stack (A2/C3/E3/A3)
+            // for a calm, slightly melancholic ambient character rather than
+            // a flat drone.
+            const freqs = [110.00, 130.81, 164.81, 220.00];
+            freqs.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.detune.value = (i % 2 === 0 ? -1 : 1) * (4 + i * 2);
+
+                const oscGain = audioCtx.createGain();
+                oscGain.gain.value = 0.05;
+
+                // Gentle per-voice tremolo, each at a slightly different
+                // rate so voices drift in and out of phase with each other.
+                const tremLFO = audioCtx.createOscillator();
+                tremLFO.frequency.value = 0.04 + i * 0.015;
+                const tremGain = audioCtx.createGain();
+                tremGain.gain.value = 0.02;
+                tremLFO.connect(tremGain);
+                tremGain.connect(oscGain.gain);
+                tremLFO.start();
+
+                osc.connect(oscGain);
+                oscGain.connect(filter);
+                osc.start();
+
+                ambientNodes.push(osc, tremLFO);
+            });
+
+            ambientNodes.push(filterLFO);
+        }
+
+        function fadeGain(gainNode, target, duration) {
+            const now = audioCtx.currentTime;
+            gainNode.gain.cancelScheduledValues(now);
+            gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+            gainNode.gain.linearRampToValueAtTime(target, now + duration);
+        }
+
+        function startAmbient() {
+            if (soundStarted) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                return;
+            }
+            soundStarted = true;
+            buildAmbientPad();
+            fadeGain(masterGain, soundMuted ? 0 : 0.5, 3.5);
+            updateSoundBtn();
+        }
+
+        function toggleSound() {
+            if (!soundStarted) {
+                soundMuted = false;
+                startAmbient();
+                return;
+            }
+            soundMuted = !soundMuted;
+            fadeGain(masterGain, soundMuted ? 0 : 0.5, 0.8);
+            updateSoundBtn();
+        }
+
+        function updateSoundBtn() {
+            const btn = document.getElementById('sound-toggle');
+            if (!btn) return;
+            btn.textContent = soundMuted ? '音 UNMUTE' : '音 MUTE';
+        }
+
+        // Attempt immediate autoplay (works if the browser's heuristics
+        // allow it); if blocked, arm on first interaction instead.
+        window.addEventListener('load', () => {
+            try {
+                startAmbient();
+            } catch (e) {
+                // Autoplay blocked -- expected in most browsers on first visit.
+            }
+        });
+
+        ['click', 'keydown', 'touchstart', 'scroll'].forEach((evt) => {
+            window.addEventListener(evt, function armAudio() {
+                startAmbient();
+            }, { once: true, passive: true });
+        });
+
         // -- ANIME.JS ANIMATIONS --
 
         document.addEventListener('DOMContentLoaded', () => {
+
+            // -1. LENIS SMOOTH SCROLL
+            var lenis = new Lenis({
+                duration: 1.05,
+                easing: function (t) { return 1 - Math.pow(1 - t, 4); }, // quart ease-out, that "editorial" glide
+                smoothWheel: true,
+                syncTouch: false, // keep native touch feel on mobile
+                touchMultiplier: 1.6
+            });
+
+            var lenisScrollY = 0;
+            lenis.on('scroll', function (e) {
+                lenisScrollY = e.scroll;
+            });
+
+            function raf(time) {
+                lenis.raf(time);
+                requestAnimationFrame(raf);
+            }
+            requestAnimationFrame(raf);
+
+            // Route any in-page anchor links through Lenis
+            document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+                a.addEventListener('click', function (e) {
+                    var target = document.querySelector(a.getAttribute('href'));
+                    if (target) {
+                        e.preventDefault();
+                        lenis.scrollTo(target, { offset: -24, duration: 1.2 });
+                    }
+                });
+            });
 
             // 0. TEAR SCROLL EFFECT
             var tearLeft = document.getElementById('tearLeft');
@@ -716,7 +989,7 @@
             }, 1200);
 
             function updateTear() {
-                var scrollY = window.scrollY || window.pageYOffset;
+                var scrollY = lenisScrollY;
                 var t = Math.min(scrollY / TEAR_DISTANCE, 1);
                 // Ease out cubic for smooth feel
                 var eased = 1 - Math.pow(1 - t, 3);
@@ -739,9 +1012,7 @@
                 }
             }
 
-            window.addEventListener('scroll', function() {
-                requestAnimationFrame(updateTear);
-            }, { passive: true });
+            lenis.on('scroll', updateTear);
 
             // Initial state
             updateTear();
