@@ -1,146 +1,54 @@
-# Invisible Attacks () Offline Reference Runbook
+# Invisible Attacks — Offline Runbook
 
-## Overview
-Invisible Attacks provides speculative background shadowing and sandbox boundary enforcement. By pre-fetching resources or launching speculative tasks in background shadow queues while enforcing strict path boundaries, agents maintain high speed and process safety.
+Condensed operational steps. For the enforcement boundary and threat model see
+[`invisible_attacks_guide.md`](./invisible_attacks_guide.md).
 
-## Key Capabilities
-1. **Path Boundary Enforcement**: Hard validation of target file paths against allowed root boundaries (, , ). Non-zero exit code on unauthorized mutations.
-2. **Speculative Queue Management**: Async queuing and status tracking for speculative pre-fetch commands (, ).
-3. **Subshell Isolation**: Isolated execution context with  environment variables ().
-4. **Leak Detection**: Systems process tree checks for orphan processes ().
+## Path validation loop
+1. **Validate before mutating**:
+   ```bash
+   python3 ./scripts/sandbox_enforcer.py --path "<target>" --allowed-root "<dir>" --action write --json
+   ```
+2. **Branch on exit code**: `0` → proceed. `1` → halt, do not force the write, request
+   a scope update from the parent agent.
 
-## CLI Usage Guide
-{
-  "allowed": true,
-  "target_path": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite/scripts/sandbox_enforcer.py",
-  "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite",
-  "action": "write",
-  "reason": "Path '/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite/scripts/sandbox_enforcer.py' is within allowed root '/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite'"
-}
-{
-  "allowed": false,
-  "target_path": "/private/etc/passwd",
-  "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite",
-  "action": "write",
-  "reason": "Target path '/private/etc/passwd' violates allowed boundary root '/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite'"
-}
-{
-  "status": "QUEUED",
-  "task_id": "spec-015",
-  "command": "pytest tests/",
-  "queue_length": 15,
-  "dry_run": false
-}
-{
-  "status": "OK",
-  "queue_length": 15,
-  "speculative_queue": [
-    {
-      "task_id": "spec-001",
-      "command": "npm build",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-002",
-      "command": "<cmd>",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-003",
-      "command": "npm test",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-004",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-005",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-006",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-007",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-008",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-009",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-010",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-011",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-012",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-013",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-014",
-      "command": "<command>",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-015",
-      "command": "pytest tests/",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    }
-  ]
-}
-{
-  "status": "SUCCESS",
-  "exit_code": 0,
-  "command": "ls -la",
-  "stdout": "total 24
-drwxr-xr-x@  5 kushagargargsmacbook  staff    160 25 Jul 16:55 __pycache__
--rw-r--r--   1 kushagargargsmacbook  staff      0 25 Jul 17:03 --json
-drwxr-xr-x  10 kushagargargsmacbook  staff    320 25 Jul 17:02 .
-drwxr-xr-x   5 kushagargargsmacbook  staff    160 25 Jul 16:49 ..
-drwxr-xr-x  16 kushagargargsmacbook  staff    512 25 Jul 17:01 .agents
--rw-r--r--   1 kushagargargsmacbook  staff  11530 25 Jul 16:49 PROJECT.md
-drwxr-xr-x  18 kushagargargsmacbook  staff    576 25 Jul 16:57 references
-drwxr-xr-x  11 kushagargargsmacbook  staff    352 25 Jul 16:51 scripts
-drwxr-xr-x   9 kushagargargsmacbook  staff    288 25 Jul 16:48 skills
-drwxr-xr-x  10 kushagargargsmacbook  staff    320 25 Jul 16:57 tests",
-  "stderr": ""
-}
+## Speculative queue loop
+| Step | Command |
+|---|---|
+| Enqueue | `--queue-speculative "<cmd>" --allowed-root "<dir>" --json` |
+| Execute all | `--run-queue --json` |
+| Inspect | `--status --json` |
+| Clear | `--clear-queue --json` |
+
+Queued tasks are `QUEUED` until `--run-queue` launches them, then `RUNNING`, then
+`FINISHED` once the PID exits. `--status` reconciles against real process liveness.
+
+## Leak check
+```bash
+python3 ./scripts/sandbox_enforcer.py --check-leak --json
+```
+Exit `1` when spawned processes are still alive, `0` when clean. Only tasks launched
+via `--run-queue` are tracked.
+
+## Scoped execution
+```bash
+python3 ./scripts/sandbox_enforcer.py --run-cmd "<cmd>" --allowed-root "<dir>" --timeout 30 --json
+```
+Sets cwd and one env var. **This is not isolation** — see the guide.
+
+## Exit codes
+| Code | Meaning |
+|---|---|
+| 0 | Allowed / succeeded / no leaks |
+| 1 | Path denied, command failed, or leaks detected |
+| 124 | `--run-cmd` timed out |
+
+## State
+`$AGENT_SUPERPOWERS_STATE`, else `$XDG_STATE_HOME/agent-superpowers/`, else
+`~/.local/state/agent-superpowers/`. Queue at `speculative_queue.json`, task output
+under `speculative_logs/`. Never inside the skill folder.
+
+## Failure modes
+- **Task stuck `RUNNING`** — run `--status` to reconcile, or `--check-leak` to see the PID.
+- **`--run-cmd` fails with "not a directory"** — `--allowed-root` does not exist.
+- **Queue looks stale** — `--clear-queue`; task IDs come from a persistent counter and
+  are never reused.

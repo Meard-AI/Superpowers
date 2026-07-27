@@ -1,39 +1,69 @@
 ---
 name: cqc
-description: Close-Quarters Combat micro-scope sandboxing & boundary enforcement engine. Locks agent execution perimeter to specific subdirectories or file globs to prevent out-of-scope code modifications.
+description: Close-Quarters Combat perimeter checking for file modifications. Use before running commands that modify a sensitive sub-module, to statically check a command for perimeter escape and detect out-of-perimeter side-effects afterwards.
 allowed-tools:
-  - run_command
-  - view_file
-  - write_to_file
-  - replace_file_content
+  - Bash
+  - Read
+  - Edit
 metadata:
-  version: 1.0.0
-  author: Antigravity Core Team
+  version: 2.0.0
+  author: Agent Superpowers Team
+  category: safety
 ---
 
 # Close-Quarters Combat (CQC) Playbook
 
-**CQC** establishes a strict operational perimeter when modifying sensitive codebases or isolated sub-modules, preventing collateral modifications outside the allowed boundary.
+**CQC** narrows the working perimeter when modifying sensitive codebases, catching
+commands that reach outside a declared directory and reporting collateral changes.
 
 ## Triggers & Scope
-- Triggered before performing code modifications in target sub-paths or high-risk repositories.
-- Triggered when enforcing path security boundaries.
+- Trigger before performing code modifications in a target sub-path or high-risk repository.
+- Trigger when you want to confirm a command touched nothing outside its perimeter.
 
 ## Workflow Instructions
 
-### 1. Validate Operational Boundary
-Check whether a target path is allowed under the active whitelist:
+### 1. Validate a target path
+
 ```bash
-python3 ./scripts/boundary_validator.py --allowed-paths "src/,lib/,skills/" --check-path "<target_file_path>" --json
+python3 ./scripts/boundary_validator.py --allowed-paths "src/,lib/" --check-path "<target_file_path>" --json
 ```
 
-### 2. Execute Bounded Command
-Run commands strictly inside the locked scope using CQC Executor:
+Exits `0` when allowed, `1` when blocked.
+
+### 2. Statically analyze a command before running it
+
 ```bash
-python3 ./scripts/cqc_executor.py --target-dir "<allowed_subpath>" --cmd "<command_string>" --json
+python3 ./scripts/boundary_validator.py --check-command "<command_string>" --perimeter-dir "<dir>" --json
 ```
+
+Three outcomes: `ALLOWED`, `BLOCKED` (a referenced path escapes), or `UNDECIDABLE`
+(the command contains runtime expansion, so static analysis cannot be trusted).
+
+### 3. Execute inside the perimeter
+
+```bash
+python3 ./scripts/cqc_executor.py --perimeter-dir "<allowed_subpath>" --command "<command_string>" --json
+```
+
+Execution is **refused** when static analysis finds an escape. Pass `--warn-only` to
+override, `--dry-run` to analyze without running, and `--watch-dir <path>` (repeatable)
+to monitor additional roots for side-effects.
+
+Exit codes: `0` clean · `2` blocked or boundary violated · otherwise the command's own exit code.
+
+## Enforcement Boundary
+CQC is a **mistake detector, not a security sandbox**. Two limits, both reported in
+the output rather than hidden:
+
+- Static analysis reads a shell command as a string. Variable expansion, command
+  substitution, `eval`, or any interpreter defeats it — hence the `UNDECIDABLE` verdict.
+- The filesystem diff only covers `watch_scope` (default: the perimeter's parent).
+  Writes outside those roots are not monitored; `watch_scope_note` says so on every run.
+
+To actually *prevent* an escape, use an OS sandbox: `sandbox-exec` (macOS),
+Landlock + seccomp or bubblewrap (Linux), or a container.
 
 ## Error Handling
-If path validation fails (`BOUNDARY_VIOLATION`):
-1. Halt execution immediately without modifying out-of-bounds files.
-2. Log boundary violation in handoff report.
+On `blocked` or `violated`:
+1. Do not re-run with `--warn-only` to force it through.
+2. Report the specific `boundary_violations` entries to the parent agent.

@@ -10,12 +10,39 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/darkroomengineering/lenis@1.1.13/dist/lenis.min.js"></script>
+    <script>
+      // Runs synchronously after the CDN tags: if anime.js is present and the user
+      // has not asked for reduced motion, opt into the hidden-then-reveal start state.
+      (function () {
+        var reduced = window.matchMedia
+          && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (typeof anime === 'function' && !reduced) {
+          document.documentElement.className += ' js-animate';
+        }
+        // Resolve the theme before first paint so a returning visitor never sees
+        // the OS default flash before their own saved choice is applied.
+        try {
+          var saved = localStorage.getItem('superpowers-theme');
+          if (saved === 'dark' || saved === 'light') {
+            document.documentElement.setAttribute('data-theme', saved);
+          }
+        } catch (err) { /* storage unavailable (private mode, some file:// contexts) */ }
+      })();
+    </script>
     <style>
         html.lenis, html.lenis body { height: auto; }
         .lenis.lenis-smooth { scroll-behavior: auto; }
         .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
         .lenis.lenis-stopped { overflow: hidden; }
 
+        /* Theme resolution, in precedence order:
+             1. html[data-theme]  — set by the head script from a saved choice, or
+                                    by the toggle. Single source of truth.
+             2. prefers-color-scheme — the JS-less fallback, applied only when the
+                                    head script did not run (JS disabled).
+             3. :root light defaults.
+           Keeping the attribute on <html> means one selector governs everything and
+           there are no competing body-level rules to reason about. */
         :root {
             --bg: #f4f0ea;
             --ink: #111113;
@@ -38,6 +65,26 @@
             --code-text: #f0f0f3;
             --shadow: #f0f0f3;
         }
+
+        @media (prefers-color-scheme: dark) {
+            html:not([data-theme]) {
+                --bg: #0d0d0f;
+                --ink: #f0f0f3;
+                --ink-mid: #a0a0a5;
+                --ink-light: #6e6e73;
+                --panel: #141417;
+                --code-bg: #050506;
+                --code-text: #f0f0f3;
+                --shadow: #f0f0f3;
+            }
+        }
+
+        /* Entrance animations start from opacity:0, but only when JS has proven
+           it can finish them. Without this gate a blocked anime.js CDN leaves the
+           nav, cover, and every panel permanently invisible. */
+        .js-animate .nav,
+        .js-animate .cover,
+        .js-animate .panel { opacity: 0; }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -76,7 +123,6 @@
             padding-bottom: 20px;
             border-bottom: 4px solid var(--ink);
             margin-bottom: 50px;
-            opacity: 0;
         }
 
         .logo-text {
@@ -128,7 +174,6 @@
             margin-bottom: 70px;
             position: relative;
             box-shadow: 12px 12px 0 var(--shadow);
-            opacity: 0;
         }
 
         .cover-tag {
@@ -188,7 +233,6 @@
             padding: 36px;
             position: relative;
             box-shadow: 10px 10px 0 var(--shadow);
-            opacity: 0;
         }
 
         .panel-num {
@@ -374,13 +418,18 @@
         }
 
         /* TEAR OVERLAY */
+        /* Hidden by default and revealed only once JS confirms it can drive the
+           tear. If a CDN is blocked or JS fails, the page content stays visible
+           instead of sitting behind an opaque overlay that never lifts. */
         .tear-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
             z-index: 100;
             pointer-events: none;
+            visibility: hidden;
         }
+        .tear-overlay.tear-armed { visibility: visible; }
 
         .tear-half {
             position: absolute;
@@ -519,11 +568,41 @@
             background: linear-gradient(to right, var(--ink) 0%, transparent 100%);
         }
 
+        @media (max-width: 900px) {
+            .panel { padding: 32px; }
+            .setup-cmd { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+
         @media (max-width: 600px) {
             .cover h1 { font-size: 2.6rem; }
             .panel-title { font-size: 2.2rem; }
             .panel { padding: 24px; }
             .tear-label { font-size: 1rem; }
+            .panel-num { font-size: 0.7rem; }
+            .panel-headline { font-size: 1.15rem; }
+            .copy-btn { width: 100%; }
+        }
+
+        /* Wide content must scroll inside itself, never the page body. */
+        .setup-cmd span, pre, code { overflow-wrap: anywhere; }
+
+        /* Vestibular safety: the tear, the smooth-scroll hijack, and every
+           entrance animation are motion effects. Honour the OS setting. */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.001ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.001ms !important;
+                scroll-behavior: auto !important;
+            }
+            .tear-overlay, .tear-overlay.tear-armed { visibility: hidden !important; }
+            .panel { opacity: 1 !important; transform: none !important; }
+            .slash-line { stroke-dashoffset: 0 !important; }
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--red);
+            outline-offset: 3px;
         }
     </style>
 </head>
@@ -549,8 +628,8 @@
                 <div class="logo-sub">資料集 VOL.01 -- SINGLE WORD EXECUTION</div>
             </div>
             <div class="nav-controls">
-                <button class="toggle-btn" id="sound-toggle" onclick="toggleSound()" aria-label="Toggle ambient sound">音 UNMUTE</button>
-                <button class="toggle-btn" id="theme-toggle" onclick="toggleTheme()">紙 PAPER</button>
+                <button class="toggle-btn" type="button" id="sound-toggle" onclick="toggleSound()" aria-label="Toggle ambient sound">音 UNMUTE</button>
+                <button class="toggle-btn" type="button" id="theme-toggle" onclick="toggleTheme()" aria-pressed="false" aria-label="Switch to dark theme">紙 PAPER</button>
             </div>
         </header>
 
@@ -570,7 +649,7 @@
                 <p class="panel-body">Intercepts simple subtasks (like status checks, formatting, or directory listing) and executes them deterministically in under 10 milliseconds via local pattern matching -- skipping heavy LLM reasoning loops entirely.</p>
                 <div class="platform-row">
                     <span class="platform-label">Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'ultra-instinct')">
+                    <select class="platform-select" aria-label="Choose your agent for the ultra-instinct skill" onchange="updateSetup(this, 'ultra-instinct')">
                         <option value="antigravity">Antigravity</option>
                         <option value="claude">Claude Code</option>
                         <option value="opencode">OpenCode</option>
@@ -581,7 +660,7 @@
                 </div>
                 <div class="setup-cmd">
                     <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'ultra-instinct' skill folder into .agents/skills/ultra-instinct at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
-                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                    <button class="copy-btn" type="button" onclick="copyCmd(this)" aria-label="Copy setup instructions to clipboard">COPY</button>
                 </div>
             </article>
 
@@ -595,7 +674,7 @@
                 <p class="panel-body">Parses raw execution transcripts, terminal session logs, or API traces and automatically packages them into parameterised, reusable custom agent skills.</p>
                 <div class="platform-row">
                     <span class="platform-label">Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'copy-ability')">
+                    <select class="platform-select" aria-label="Choose your agent for the copy-ability skill" onchange="updateSetup(this, 'copy-ability')">
                         <option value="antigravity">Antigravity</option>
                         <option value="claude">Claude Code</option>
                         <option value="opencode">OpenCode</option>
@@ -606,7 +685,7 @@
                 </div>
                 <div class="setup-cmd">
                     <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'copy-ability' skill folder into .agents/skills/copy-ability at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
-                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                    <button class="copy-btn" type="button" onclick="copyCmd(this)" aria-label="Copy setup instructions to clipboard">COPY</button>
                 </div>
             </article>
 
@@ -620,7 +699,7 @@
                 <p class="panel-body">Calculates absolute canonical paths using realpath resolution and verifies file mutations against target root boundaries -- hard-blocking unauthorized directory escapes.</p>
                 <div class="platform-row">
                     <span class="platform-label">Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'invisible-attacks')">
+                    <select class="platform-select" aria-label="Choose your agent for the invisible-attacks skill" onchange="updateSetup(this, 'invisible-attacks')">
                         <option value="antigravity">Antigravity</option>
                         <option value="claude">Claude Code</option>
                         <option value="opencode">OpenCode</option>
@@ -631,7 +710,7 @@
                 </div>
                 <div class="setup-cmd">
                     <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'invisible-attacks' skill folder into .agents/skills/invisible-attacks at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
-                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                    <button class="copy-btn" type="button" onclick="copyCmd(this)" aria-label="Copy setup instructions to clipboard">COPY</button>
                 </div>
             </article>
 
@@ -645,7 +724,7 @@
                 <p class="panel-body">Dynamically adapts system prompts, token budgets, and allowed toolsets based on the current project phase (plan, build, audit, format).</p>
                 <div class="platform-row">
                     <span class="platform-label">Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'mastery')">
+                    <select class="platform-select" aria-label="Choose your agent for the mastery skill" onchange="updateSetup(this, 'mastery')">
                         <option value="antigravity">Antigravity</option>
                         <option value="claude">Claude Code</option>
                         <option value="opencode">OpenCode</option>
@@ -656,7 +735,7 @@
                 </div>
                 <div class="setup-cmd">
                     <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'mastery' skill folder into .agents/skills/mastery at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
-                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                    <button class="copy-btn" type="button" onclick="copyCmd(this)" aria-label="Copy setup instructions to clipboard">COPY</button>
                 </div>
             </article>
 
@@ -670,7 +749,7 @@
                 <p class="panel-body">Monitors command streams for repetitive error patterns. When an agent stalls, it forces a self-healing protocol -- relaxing strict schemas and executing diagnostic fallbacks.</p>
                 <div class="platform-row">
                     <span class="platform-label">Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'heat-mode')">
+                    <select class="platform-select" aria-label="Choose your agent for the heat-mode skill" onchange="updateSetup(this, 'heat-mode')">
                         <option value="antigravity">Antigravity</option>
                         <option value="claude">Claude Code</option>
                         <option value="opencode">OpenCode</option>
@@ -681,7 +760,7 @@
                 </div>
                 <div class="setup-cmd">
                     <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'heat-mode' skill folder into .agents/skills/heat-mode at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
-                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                    <button class="copy-btn" type="button" onclick="copyCmd(this)" aria-label="Copy setup instructions to clipboard">COPY</button>
                 </div>
             </article>
 
@@ -695,7 +774,7 @@
                 <p class="panel-body">Grants agents high-frequency file editing privileges strictly inside a designated subdirectory while enforcing real-time perimeter checks on all subshell commands.</p>
                 <div class="platform-row">
                     <span class="platform-label">Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'cqc')">
+                    <select class="platform-select" aria-label="Choose your agent for the cqc skill" onchange="updateSetup(this, 'cqc')">
                         <option value="antigravity">Antigravity</option>
                         <option value="claude">Claude Code</option>
                         <option value="opencode">OpenCode</option>
@@ -706,7 +785,7 @@
                 </div>
                 <div class="setup-cmd">
                     <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'cqc' skill folder into .agents/skills/cqc at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
-                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                    <button class="copy-btn" type="button" onclick="copyCmd(this)" aria-label="Copy setup instructions to clipboard">COPY</button>
                 </div>
             </article>
 
@@ -720,7 +799,7 @@
                 <p class="panel-body">Applies 5 genetic mutations (null byte injections, extreme unicode, format strings, boundary numbers) to code snippets or API payloads to uncover hidden crashes before production.</p>
                 <div class="platform-row">
                     <span class="platform-label">Setup for:</span>
-                    <select class="platform-select" onchange="updateSetup(this, 'animal-instinct')">
+                    <select class="platform-select" aria-label="Choose your agent for the animal-instinct skill" onchange="updateSetup(this, 'animal-instinct')">
                         <option value="antigravity">Antigravity</option>
                         <option value="claude">Claude Code</option>
                         <option value="opencode">OpenCode</option>
@@ -731,7 +810,7 @@
                 </div>
                 <div class="setup-cmd">
                     <span>Clone https://github.com/Meard-AI/Superpowers and copy the 'animal-instinct' skill folder into .agents/skills/animal-instinct at your workspace root -- Antigravity auto-discovers it from there, no restart needed.</span>
-                    <button class="copy-btn" onclick="copyCmd(this)">COPY</button>
+                    <button class="copy-btn" type="button" onclick="copyCmd(this)" aria-label="Copy setup instructions to clipboard">COPY</button>
                 </div>
             </article>
 
@@ -780,28 +859,83 @@
 
         function copyCmd(btn) {
             const text = btn.previousElementSibling.textContent.trim();
-            navigator.clipboard.writeText(text);
-            btn.textContent = 'DONE';
-            setTimeout(() => { btn.textContent = 'COPY'; }, 1200);
+
+            function feedback(label) {
+                btn.textContent = label;
+                setTimeout(() => { btn.textContent = 'COPY'; }, 1400);
+            }
+
+            // The async Clipboard API needs a secure context and REJECTS on file://
+            // in Chrome. Reporting DONE regardless is a false success, so fall back
+            // to execCommand and only claim success when a copy actually happened.
+            function legacyCopy() {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.setAttribute('readonly', '');
+                    ta.style.cssText = 'position:absolute;left:-9999px;top:0;';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    const ok = document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    return ok;
+                } catch (err) {
+                    return false;
+                }
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text)
+                    .then(() => feedback('DONE'))
+                    .catch(() => feedback(legacyCopy() ? 'DONE' : 'COPY FAILED'));
+            } else {
+                feedback(legacyCopy() ? 'DONE' : 'COPY FAILED');
+            }
+        }
+
+        function prefersDark() {
+            return window.matchMedia
+                && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        function currentTheme() {
+            // The attribute lives on <html>, matching the head script and the CSS.
+            // With no attribute the OS preference is in force, so read that —
+            // otherwise the first click is a no-op for a user already on dark.
+            const explicit = document.documentElement.getAttribute('data-theme');
+            if (explicit === 'dark' || explicit === 'light') return explicit;
+            return prefersDark() ? 'dark' : 'light';
+        }
+
+        function syncThemeButton(theme) {
+            const btn = document.getElementById('theme-toggle');
+            if (!btn) return;
+            btn.textContent = theme === 'dark' ? '墨 INK' : '紙 PAPER';
+            btn.setAttribute('aria-pressed', String(theme === 'dark'));
+            btn.setAttribute('aria-label',
+                theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
         }
 
         function toggleTheme() {
-            const body = document.body;
-            const btn = document.getElementById('theme-toggle');
-            if (body.getAttribute('data-theme') === 'dark') {
-                body.removeAttribute('data-theme');
-                btn.textContent = '紙 PAPER';
-            } else {
-                body.setAttribute('data-theme', 'dark');
-                btn.textContent = '墨 INK';
+            const next = currentTheme() === 'dark' ? 'light' : 'dark';
+
+            document.documentElement.setAttribute('data-theme', next);
+            try { localStorage.setItem('superpowers-theme', next); } catch (err) { /* ignore */ }
+            syncThemeButton(next);
+            // anime.js is a CDN dependency and the toggle must work without it.
+            var reduced = window.matchMedia
+                && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (typeof anime === 'function' && !reduced) {
+                try {
+                    anime({
+                        targets: '.wrap',
+                        scale: [0.99, 1],
+                        opacity: [0.88, 1],
+                        duration: 300,
+                        easing: 'easeInOutQuad'
+                    });
+                } catch (err) { /* cosmetic only */ }
             }
-            anime({
-                targets: '.wrap',
-                scale: [0.99, 1],
-                opacity: [0.88, 1],
-                duration: 300,
-                easing: 'easeInOutQuad'
-            });
         }
 
         // -- AMBIENT SOUND ENGINE --
@@ -942,31 +1076,60 @@
 
         document.addEventListener('DOMContentLoaded', () => {
 
-            // -1. LENIS SMOOTH SCROLL
-            var lenis = new Lenis({
-                duration: 1.05,
-                easing: function (t) { return 1 - Math.pow(1 - t, 4); }, // quart ease-out, that "editorial" glide
-                smoothWheel: true,
-                syncTouch: false, // keep native touch feel on mobile
-                touchMultiplier: 1.6
-            });
+            // Every enhancement below is optional. The page must remain readable
+            // when a CDN is blocked, offline, or filtered by an extension — so
+            // capability is detected, never assumed, and each block is isolated.
+            // The button label must reflect the theme the head script resolved,
+            // not the hardcoded markup default.
+            syncThemeButton(currentTheme());
 
-            var lenisScrollY = 0;
-            lenis.on('scroll', function (e) {
-                lenisScrollY = e.scroll;
-            });
+            var HAS_LENIS = typeof Lenis === 'function';
+            var HAS_ANIME = typeof anime === 'function';
+            var REDUCED = window.matchMedia
+                && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            var ANIMATE = HAS_ANIME && !REDUCED;
 
-            function raf(time) {
-                lenis.raf(time);
-                requestAnimationFrame(raf);
+            function safely(label, fn) {
+                try { fn(); }
+                catch (err) { console.warn('[superpowers] ' + label + ' skipped:', err); }
             }
-            requestAnimationFrame(raf);
 
-            // Route any in-page anchor links through Lenis
+            // -1. LENIS SMOOTH SCROLL (optional)
+            var lenis = null;
+            var lenisScrollY = window.scrollY || 0;
+
+            if (HAS_LENIS && !REDUCED) {
+                safely('smooth scroll', function () {
+                    lenis = new Lenis({
+                        duration: 1.05,
+                        easing: function (t) { return 1 - Math.pow(1 - t, 4); },
+                        smoothWheel: true,
+                        syncTouch: false,
+                        touchMultiplier: 1.6
+                    });
+
+                    lenis.on('scroll', function (e) { lenisScrollY = e.scroll; });
+
+                    function raf(time) {
+                        lenis.raf(time);
+                        requestAnimationFrame(raf);
+                    }
+                    requestAnimationFrame(raf);
+                });
+            }
+
+            if (!lenis) {
+                // Native scroll fallback keeps the tear driven and anchors working.
+                window.addEventListener('scroll', function () {
+                    lenisScrollY = window.scrollY;
+                }, { passive: true });
+            }
+
+            // Route any in-page anchor links through Lenis when available
             document.querySelectorAll('a[href^="#"]').forEach(function (a) {
                 a.addEventListener('click', function (e) {
                     var target = document.querySelector(a.getAttribute('href'));
-                    if (target) {
+                    if (target && lenis) {
                         e.preventDefault();
                         lenis.scrollTo(target, { offset: -24, duration: 1.2 });
                     }
@@ -980,15 +1143,22 @@
             var tearLabel = document.getElementById('tearLabel');
             var tearProgress = { value: 0 };
             var tearDone = false;
-            var TEAR_DISTANCE = 300; // scroll px to fully tear
+            // Scale the tear distance to the viewport so the effect is not tuned
+            // exclusively for desktop; 300px is a large slice of a short screen.
+            var TEAR_DISTANCE = Math.max(220, Math.min(420, window.innerHeight * 0.42));
             var MAX_SHIFT = 55; // max % shift for each half
+            var tearEnabled = !REDUCED && tearLeft && tearRight && tearOverlay && tearLabel;
 
-            // Show the hint label initially
-            setTimeout(function() {
-                tearLabel.style.opacity = '1';
-            }, 1200);
+            if (tearEnabled) {
+                // Arm the overlay only now that we know JS is running and can lift it.
+                tearOverlay.classList.add('tear-armed');
+                setTimeout(function() { tearLabel.style.opacity = '1'; }, 1200);
+            } else if (tearLabel) {
+                tearLabel.style.display = 'none';
+            }
 
             function updateTear() {
+                if (!tearEnabled) { return; }
                 var scrollY = lenisScrollY;
                 var t = Math.min(scrollY / TEAR_DISTANCE, 1);
                 // Ease out cubic for smooth feel
@@ -1012,96 +1182,110 @@
                 }
             }
 
-            lenis.on('scroll', updateTear);
+            if (lenis) {
+                lenis.on('scroll', updateTear);
+            } else {
+                window.addEventListener('scroll', updateTear, { passive: true });
+            }
+            window.addEventListener('resize', function () {
+                TEAR_DISTANCE = Math.max(220, Math.min(420, window.innerHeight * 0.42));
+                updateTear();
+            }, { passive: true });
 
             // Initial state
             updateTear();
 
             // 1. Timeline intro reveal
-            var intro = anime.timeline({ easing: 'easeOutExpo' });
-
-            intro
-            .add({
-                targets: '.nav',
-                translateY: [-28, 0],
-                opacity: [0, 1],
-                duration: 700
-            })
-            .add({
-                targets: '.cover',
-                translateY: [24, 0],
-                scale: [0.97, 1],
-                opacity: [0, 1],
-                duration: 800
-            }, '-=350');
+            if (ANIMATE) safely('intro timeline', function () {
+                anime.timeline({ easing: 'easeOutExpo' })
+                .add({
+                    targets: '.nav',
+                    translateY: [-28, 0],
+                    opacity: [0, 1],
+                    duration: 700
+                })
+                .add({
+                    targets: '.cover',
+                    translateY: [24, 0],
+                    scale: [0.97, 1],
+                    opacity: [0, 1],
+                    duration: 800
+                }, '-=350');
+            });
 
             // 2. Scroll-triggered panel animations using IntersectionObserver
-            var panelObserver = new IntersectionObserver(function(entries) {
-                entries.forEach(function(entry) {
-                    if (entry.isIntersecting) {
-                        anime({
-                            targets: entry.target,
-                            translateY: [50, 0],
-                            opacity: [0, 1],
-                            duration: 750,
-                            easing: 'easeOutCubic'
-                        });
-                        panelObserver.unobserve(entry.target);
-                    }
-                });
-            }, { threshold: 0.15 });
+            if (ANIMATE && 'IntersectionObserver' in window) safely('panel reveals', function () {
+                var panelObserver = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            anime({
+                                targets: entry.target,
+                                translateY: [50, 0],
+                                opacity: [0, 1],
+                                duration: 750,
+                                easing: 'easeOutCubic'
+                            });
+                            panelObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.15 });
 
-            document.querySelectorAll('.panel').forEach(function(p) {
-                panelObserver.observe(p);
+                document.querySelectorAll('.panel').forEach(function(p) {
+                    panelObserver.observe(p);
+                });
             });
 
             // 3. Sword slash SVG animations on scroll (strokeDashoffset)
-            document.querySelectorAll('.slash-line').forEach(function(line) {
-                var length = line.getTotalLength();
-                line.style.strokeDasharray = length;
-                line.style.strokeDashoffset = length;
-            });
-
-            var slashObserver = new IntersectionObserver(function(entries) {
-                entries.forEach(function(entry) {
-                    if (entry.isIntersecting) {
-                        var line = entry.target.querySelector('.slash-line');
-                        if (line) {
-                            var length = line.getTotalLength();
-                            anime({
-                                targets: line,
-                                strokeDashoffset: [length, 0],
-                                duration: 600,
-                                easing: 'easeInOutQuart'
-                            });
-                        }
-                        slashObserver.unobserve(entry.target);
-                    }
+            if (ANIMATE && 'IntersectionObserver' in window) safely('slash reveals', function () {
+                document.querySelectorAll('.slash-line').forEach(function(line) {
+                    var length = line.getTotalLength();
+                    line.style.strokeDasharray = length;
+                    line.style.strokeDashoffset = length;
                 });
-            }, { threshold: 0.5 });
 
-            document.querySelectorAll('.slash-divider').forEach(function(d) {
-                slashObserver.observe(d);
+                var slashObserver = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            var line = entry.target.querySelector('.slash-line');
+                            if (line) {
+                                var length = line.getTotalLength();
+                                anime({
+                                    targets: line,
+                                    strokeDashoffset: [length, 0],
+                                    duration: 600,
+                                    easing: 'easeInOutQuart'
+                                });
+                            }
+                            slashObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                document.querySelectorAll('.slash-divider').forEach(function(d) {
+                    slashObserver.observe(d);
+                });
             });
 
             // 4. Interactive panel hover micro-animations
-            document.querySelectorAll('.panel').forEach(function(panel) {
-                panel.addEventListener('mouseenter', function() {
-                    anime({
-                        targets: panel,
-                        translateY: -6,
-                        boxShadow: '14px 14px 0px var(--shadow)',
-                        duration: 220,
-                        easing: 'easeOutQuad'
+            if (ANIMATE) safely('panel hover', function () {
+                document.querySelectorAll('.panel').forEach(function(panel) {
+                    panel.addEventListener('mouseenter', function() {
+                        anime({
+                            targets: panel,
+                            translateY: -6,
+                            boxShadow: '14px 14px 0px var(--shadow)',
+                            duration: 220,
+                            easing: 'easeOutQuad'
+                        });
                     });
-                });
-                panel.addEventListener('mouseleave', function() {
-                    anime({
-                        targets: panel,
-                        translateY: 0,
-                        boxShadow: '10px 10px 0px var(--shadow)',
-                        duration: 220,
-                        easing: 'easeOutQuad'
+                    panel.addEventListener('mouseleave', function() {
+                        anime({
+                            targets: panel,
+                            translateY: 0,
+                            boxShadow: '10px 10px 0px var(--shadow)',
+                            duration: 220,
+                            easing: 'easeOutQuad'
+                        });
                     });
                 });
             });
