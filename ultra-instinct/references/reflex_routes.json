@@ -1,32 +1,50 @@
 [
   {
-    "pattern": "(?i).*(lint|check format|style|flake8|pylint|rubocop|eslint).*",
-    "command": "flake8 .",
-    "description": "Run standard linter check",
-    "confidence": 0.95
-  },
-  {
-    "pattern": "(?i).*(run test|pytest|unit test|test suite|npm test).*",
-    "command": "python3 -m unittest discover -s tests",
-    "description": "Run unit test suite",
-    "confidence": 0.9
-  },
-  {
-    "pattern": "(?i).*(git status|repo status|check status|git diff).*",
+    "pattern": "(?i)^\\s*(git\\s+status|repo\\s+status|check\\s+git\\s+status)\\s*$",
     "command": "git status --short",
     "description": "Check git repository state",
     "confidence": 0.95
   },
   {
-    "pattern": "(?i).*(python --version|node --version|cat package.json|ls -la).*",
-    "command": "sys_info",
-    "description": "System environment inspection",
+    "pattern": "(?i)^\\s*git\\s+diff\\s*$",
+    "command": "git diff --stat",
+    "description": "Summarize unstaged changes",
+    "confidence": 0.95
+  },
+  {
+    "pattern": "(?i)^\\s*(npm|yarn|pnpm)\\s+test\\s*$",
+    "command": "npm test",
+    "description": "Run the JavaScript test suite",
+    "confidence": 0.9
+  },
+  {
+    "pattern": "(?i)^\\s*(pytest|run\\s+pytest|python\\s+tests?)\\s*$",
+    "command": "python3 -m pytest",
+    "description": "Run the Python test suite",
+    "confidence": 0.9
+  },
+  {
+    "pattern": "(?i)^\\s*(flake8|run\\s+flake8|python\\s+lint)\\s*$",
+    "command": "flake8 .",
+    "description": "Run the Python linter",
+    "confidence": 0.9
+  },
+  {
+    "pattern": "(?i)^\\s*(eslint|run\\s+eslint|js\\s+lint)\\s*$",
+    "command": "npx eslint .",
+    "description": "Run the JavaScript linter",
+    "confidence": 0.9
+  },
+  {
+    "pattern": "(?i)^\\s*(python\\s+--version|python\\s+version)\\s*$",
+    "command": "python3 --version",
+    "description": "Report the Python interpreter version",
     "confidence": 0.98
   },
   {
-    "pattern": "(?i).*lint.*",
-    "command": "flake8 .",
-    "description": "Custom route for pattern '(?i).*lint.*'",
-    "confidence": 0.95
+    "pattern": "(?i)^\\s*(node\\s+--version|node\\s+version)\\s*$",
+    "command": "node --version",
+    "description": "Report the Node interpreter version",
+    "confidence": 0.98
   }
 ]

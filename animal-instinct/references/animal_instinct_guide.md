@@ -1,64 +1,141 @@
-# Animal-Instinct Genetic Fuzzing & Mutation Guide
+# Animal Instinct — Mutation Fuzzing Guide
 
 ## 1. Overview
-The Animal-Instinct Skill introduces genetic fuzzing and automated mutation testing to evaluate code robustness under extreme, malformed, or hostile input conditions. It probes edge cases, unhandled exceptions, type-mismatch vulnerabilities, and crash conditions, outputting a structured risk score.
+Animal Instinct mutates seed inputs and feeds them to a target CLI or script, looking
+for inputs the target does not survive.
+
+It is a **blackbox random fuzzer**. It knows nothing about the target's internals and
+receives no coverage feedback. That makes it cheap and dependency-free, and it is why
+Section 6 tells you when to reach for a real fuzzing engine instead.
 
 ---
 
-## 2. Fuzzing Mechanics & Mutation Matrix
+## 2. The Three Non-Negotiables
 
-### 2.1 Genetic Mutation Strategies
-1. **Type Flipping**: Switches primitive data types (e.g. integer → string, string → dict, array → null).
-2. **Boundary Values**: Injects integer minimums/maximums (`2^31 - 1`, `2^63 - 1`), negative limits, `NaN`, `Infinity`, extreme floats (`1e308`).
-3. **Null & Buffer Injection**: Injects null bytes `\x00`, oversized buffer strings (10,000+ chars), path traversal strings, injection syntax.
-4. **Structural Alterations**: Deletes required JSON keys, injects unexpected extra keys, or corrupts nested list structures.
+A fuzzer missing any of these produces findings you cannot act on.
 
----
+### 2.1 Reproducibility
+The RNG is seeded from `--random-seed`, or from `SystemRandom` and then **reported**.
+Every report carries `random_seed` and a `replay_hint`. Same seed plus same mutation
+count regenerates the identical sequence.
 
-## 3. CLI Helper: `mutation_fuzzer.py`
+An unseeded fuzzer that finds a crash it cannot reproduce has found nothing.
 
-### 3.1 CLI Arguments
-- `--target <path_or_cmd>`: Target Python script or shell command to fuzz (Required).
-- `--mutations <int>`: Total number of genetic mutations to test (Default: 20).
-- `--seed-inputs <dir_or_json>`: Seed input directory, JSON file, or raw JSON string (Default: Standard seed primitives).
+### 2.2 Payload recording
+Every finding stores the exact `payload` that produced it (truncated at 2000 chars,
+with `payload_truncated` flagging when that happened). A mutation *description* alone
+is not enough to reproduce a failure by hand.
 
-### 3.2 Command Line Usage Examples
+### 2.3 No shell
+The target is executed with an **argv list and `shell=False`**.
 
-#### Run default fuzzing pass on target script:
-```bash
-python3 scripts/mutation_fuzzer.py --target "src/parser.py" --mutations 50
-```
-
-#### Run fuzzing with custom seed directory:
-```bash
-python3 scripts/mutation_fuzzer.py --target "src/api_handler.py" --mutations 100 --seed-inputs "tests/seeds/"
-```
-
-#### Run fuzzing with inline seed JSON:
-```bash
-python3 scripts/mutation_fuzzer.py --target "src/cli.py" --mutations 20 --seed-inputs '{"user_id": 1, "role": "admin"}'
-```
+This matters more than it sounds. Building a shell string around fuzz payloads means
+the fuzzer executes its own payloads. The built-in corpus contains
+`'; DROP TABLE users; --` — under `shell=True` that unbalances the quoting and either
+executes arbitrary commands on the host or produces a shell syntax error that gets
+misreported as a crash *in the target*. Both were real v1 behaviours.
 
 ---
 
-## 4. Output Schema & Risk Scoring
+## 3. Outcome Classification
 
-### 4.1 JSON Output Schema
-```json
-{
-  "total_mutations": 20,
-  "crashes_found": 2,
-  "failed_seeds": [
-    "Mutant #4 [TypeFlip [NumberToString]]: Non-zero exit code: 1",
-    "Mutant #12 [NullByteInjection]: Execution timed out (>5s)"
-  ],
-  "risk_score": 0.15
-}
+**A non-zero exit code is not a crash.** A CLI that rejects malformed input with exit 1
+is behaving correctly; counting that as a crash makes the risk score meaningless
+against any well-behaved tool.
+
+| Outcome | Detection rule | Risk |
+|---|---|---|
+| `crash` | `returncode < 0` (signal), `Traceback (most recent call last)` in stderr, or `returncode >= 3` | **yes** |
+| `timeout` | Exceeded `--timeout` | **yes** |
+| `rejected` | `returncode` 1 or 2, no traceback | no |
+| `ok` | `returncode == 0` | no |
+| `harness_error` | Target not found or not executable | no |
+| `unencodable` | Payload contains a NUL byte | no |
+
+`risk_score = (crash + timeout) / executed_count`, where `executed_count` excludes
+`unencodable` payloads — those were never delivered to the target, so counting them
+would dilute the score with work that never happened.
+
+### 3.1 The NUL-byte limitation
+POSIX argv strings are NUL-terminated, so a payload containing `\x00` cannot be passed
+as a command-line argument at all. The `null_injection` and `extreme_string` primitives
+both generate such payloads. They are reported as `unencodable` rather than silently
+counted as a pass, a crash, or a harness error.
+
+To actually exercise NUL handling, fuzz through stdin or a file with a wrapper script
+as `--target`.
+
+---
+
+## 4. Mutation Primitives
+
+| Type | Derived from input? | Effect |
+|---|---|---|
+| `type_flip` | yes | int↔str, list↔dict, bool negation |
+| `boundary_value` | no | Extremes: 0, ±2³¹, ±2⁶³, ±1e308, NaN, ±Inf |
+| `null_injection` | no | Bare NUL byte |
+| `extreme_string` | no | Empty, 10k chars, NULs, SQL/XSS/format-string payloads, CJK, traversal |
+| `splice` | **yes** | Injects an extreme string *into* the seed at a random offset |
+| `structure_alteration` | yes | Delete/add/mutate dict keys, overflow lists |
+
+`splice` and `type_flip` derive from the seed; the others are constant injections.
+A corpus that resembles real input makes the derived mutations far more productive —
+supply one with `--seed-inputs`.
+
+### 4.1 NaN / Infinity handling
+These are not representable in strict JSON, so they are carried as strings. The
+serialized payload therefore stays valid and replayable.
+
+---
+
+## 5. Seed Corpus
+
+`--seed-inputs` (alias `--corpus`) accepts:
+
+| Form | Behaviour |
+|---|---|
+| Directory | Every file loaded; JSON parsed, otherwise raw text |
+| JSON file | A list becomes the corpus; a scalar becomes a single seed |
+| Raw JSON string | Parsed inline |
+| Anything else | Used as one literal string seed |
+
+> **Naming note:** `--seed-inputs` is the *corpus*. The RNG seed is `--random-seed`.
+> They are separate flags and confusing them is the most common mistake here.
+
+---
+
+## 6. When to Use Something Else
+
+| Need | Tool |
+|---|---|
+| Coverage-guided exploration | **Atheris** (libFuzzer for Python) — mutates the best-performing input rather than sampling randomly |
+| Minimal reproducer | **Hypothesis** — shrinks a failure to the smallest input that still fails |
+| Invariant testing | **Hypothesis** — asserts properties across a structured domain |
+| Native memory bugs | **AFL++** / libFuzzer against a C/C++ harness |
+
+Animal Instinct fits where those do not: zero dependencies, fuzzing an opaque CLI
+through its argv interface, and quick robustness smoke-checks in CI.
+
+---
+
+## 7. Worked Example
+
+```bash
+# Explore
+python3 scripts/mutation_fuzzer.py --target "src/cli.py" --mutations 200 \
+  --seed-inputs '{"user_id": 1, "role": "admin"}' --json > report.json
+
+# Reproduce finding #47
+python3 scripts/mutation_fuzzer.py --target "src/cli.py" --mutations 200 \
+  --random-seed "$(python3 -c "import json;print(json.load(open('report.json'))['random_seed'])")" --json
 ```
 
-### 4.2 Risk Score Calculation
-$$\text{Risk Score} = \min\left(1.0, \frac{\text{Crashes Found}}{\text{Total Mutations}} \times 1.5\right)$$
+Exit code `1` from the first command is a usable CI gate: it fires on crashes and
+timeouts, and stays `0` when the target merely rejects bad input.
 
-- **0.00 – 0.09**: Low Risk (High stability and error resilience).
-- **0.10 – 0.29**: Moderate Risk (Identified unhandled edge cases; patching recommended).
-- **0.30 – 1.00**: High Risk (Frequent crash conditions; mandatory input sanitization & exception handling required).
+---
+
+## 8. Interface Assumption
+Payloads are delivered as a **single positional argument**. A target reading from
+stdin, or taking its input via a named flag, needs a small wrapper script as
+`--target`. Fuzzing `src/cli.py` directly only exercises `argv[1]`.

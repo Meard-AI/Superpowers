@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Agent skill runtime state — must never be committed into the package.
+# Skills write to $XDG_STATE_HOME/agent-superpowers/ by design; these patterns
+# catch anything that leaks back into a skill folder.
+.agents/
+*/speculative_queue.json
+*/speculative_logs/
+heat-mode.json
+
+# Editors
+.idea/
+.vscode/
+*.swp

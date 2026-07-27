@@ -1,161 +1,93 @@
 ---
 name: invisible-attacks
-description: Speculative execution shadowing and path boundary enforcement protocol. Manages background speculative pre-fetching, shadow task queues, and enforces file path mutation boundaries.
+description: Path boundary validation and speculative background task execution. Use when validating that a file mutation stays inside an allowed root, or when queueing and running background pre-fetch tasks and checking for leaked processes.
 allowed-tools:
-  - run_command
-  - view_file
-  - write_to_file
+  - Bash
+  - Read
+  - Write
 metadata:
-  version: 1.0.0
+  version: 2.0.0
   author: Agent Superpowers Team
   category: security-and-speculation
 ---
 
-# Invisible Attacks () Skill Playbook
+# Invisible Attacks Skill Playbook
 
-Execute non-destructive speculative background tasks (step N+1 pre-fetching, parallel background builds) while strictly enforcing path mutation boundaries to guarantee workspace isolation.
+Validate path mutations against an allowed root, and run non-destructive speculative
+background tasks (step N+1 pre-fetching, parallel builds) with real process tracking.
 
 ## Triggers & Scope
-Activate  when:
-1. Executing multi-step pipelines where background step N+1 preparation reduces total workflow latency.
-2. Modifying critical or sensitive directories requiring strict path perimeter validation.
-3. Queueing background speculative tasks to optimize task throughput.
+Activate invisible-attacks when:
+1. About to write, modify, or delete a file and you need to confirm it is in bounds.
+2. Executing multi-step pipelines where preparing step N+1 in the background reduces latency.
+3. Checking whether previously spawned background tasks are still running.
 
-## Path Boundary Enforcement Protocol
-Before performing any file write or mutation operation, validate the target path against allowed root boundaries:
+## Path Boundary Validation
 
-{
-  "allowed": false,
-  "target_path": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite/<target_file>",
-  "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite/<allowed_dir>",
-  "action": "write",
-  "reason": "Target path '/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite/<target_file>' violates allowed boundary root '/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite/<allowed_dir>'"
-}
+Validate a target path before any mutation:
 
-- **If  (exit code 0)**: Proceed with file mutation.
-- **If  (exit code 1)**: HALT file mutation immediately. Log security boundary breach and notify orchestrator.
+```bash
+python3 ./scripts/sandbox_enforcer.py --path "<target_file>" --allowed-root "<allowed_dir>" --action write --json
+```
 
-## Speculative Queue & Shadowing Protocol
-To enqueue a background speculative pre-fetch task:
+- **Exit `0` (`"allowed": true`)** — proceed with the mutation.
+- **Exit `1` (`"allowed": false`)** — halt. Do not attempt to bypass or force the write.
+  Request a scope update from the parent agent instead.
 
-{
-  "status": "QUEUED",
-  "task_id": "spec-014",
-  "command": "<command>",
-  "queue_length": 14,
-  "dry_run": false
-}
+## Speculative Queue
 
-To query queued speculative task status:
+Enqueue a background task:
 
-{
-  "status": "OK",
-  "queue_length": 14,
-  "speculative_queue": [
-    {
-      "task_id": "spec-001",
-      "command": "npm build",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-002",
-      "command": "<cmd>",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-003",
-      "command": "npm test",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-004",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-005",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-006",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-007",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-008",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-009",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-010",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-011",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-012",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-013",
-      "command": "ls -la",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    },
-    {
-      "task_id": "spec-014",
-      "command": "<command>",
-      "status": "QUEUED",
-      "allowed_root": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite"
-    }
-  ]
-}
+```bash
+python3 ./scripts/sandbox_enforcer.py --queue-speculative "npm run build" --allowed-root "<dir>" --json
+```
 
-To run a isolated subshell execution:
+Execute every queued task in the background:
 
-{
-  "status": "ERROR",
-  "error": "[Errno 2] No such file or directory: '<allowed_dir>'",
-  "command": "<command>"
-}
+```bash
+python3 ./scripts/sandbox_enforcer.py --run-queue --json
+```
 
-## Security & Boundary Verification
-Periodically verify background process isolation and detect orphan process leaks:
+Inspect queue state (statuses are reconciled against real process liveness):
 
-{
-  "status": "SECURE",
-  "leaks_detected": false,
-  "monitored_directory": "/Users/kushagargargsmacbook/meard-skills/agent-superpowers-suite",
-  "orphan_processes": []
-}
+```bash
+python3 ./scripts/sandbox_enforcer.py --status --json
+```
 
-## Error Recovery
-- **Boundary Denials**: If a path mutation is blocked by boundary enforcement, do not attempt to bypass or force write outside permitted root. Request boundary relaxation from parent agent or scope update.
+Clear the queue:
+
+```bash
+python3 ./scripts/sandbox_enforcer.py --clear-queue --json
+```
+
+## Process Leak Check
+
+Report background tasks this tool spawned that are still alive:
+
+```bash
+python3 ./scripts/sandbox_enforcer.py --check-leak --json
+```
+
+Exits `1` when live processes remain (`"status": "LEAKS_DETECTED"`), `0` when clean.
+Only processes spawned through `--run-queue` are tracked; anything started by other
+means is not visible here.
+
+## Scoped Command Execution
+
+```bash
+python3 ./scripts/sandbox_enforcer.py --run-cmd "<command>" --allowed-root "<dir>" --timeout 30 --json
+```
+
+## Enforcement Boundary
+`--run-cmd` scopes the child's working directory and sets one environment variable.
+**That is not isolation.** The child inherits the full environment, runs as the same
+user, and can reach the entire filesystem. Path validation is likewise *advisory* — it
+reports whether a mutation is in bounds; it cannot prevent one.
+
+For a real boundary, use an OS sandbox: `sandbox-exec` (macOS), Landlock + seccomp or
+bubblewrap (Linux), or a container.
+
+## State Location
+Queue state and task logs are written to `$XDG_STATE_HOME/agent-superpowers/` (or
+`~/.local/state/agent-superpowers/`), never inside this skill folder. Override with
+`AGENT_SUPERPOWERS_STATE`.

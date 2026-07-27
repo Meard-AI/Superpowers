@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
 """
 context_adapter.py — Mastery: Stage-Specific Context Adapter Engine.
-Manages context window budgets, dynamic system prompts, and tool filters across workflow stages.
+
+Emits the context budget, tool allowlist, focus rules, and system prompt for a
+given lifecycle stage (plan | build | audit | format).
+
+This engine is ADVISORY and stateless: it returns configuration for the calling
+agent to apply to itself. It does not and cannot enforce a token budget or
+restrict a tool — only the host runtime can do that.
+
+Tool names differ per host, so they are emitted through a vocabulary mapping.
+Default is the Agent Skills standard vocabulary (Read/Write/Edit/Bash/Grep/Glob);
+--tool-vocabulary antigravity emits the legacy Antigravity/Windsurf names.
 """
 
 import sys
-import os
 import json
 import argparse
-from pathlib import Path
 
 STAGE_MAPPINGS = {
     "plan": "planning",
@@ -18,7 +26,19 @@ STAGE_MAPPINGS = {
     "audit": "auditing",
     "auditing": "auditing",
     "format": "refactoring",
-    "refactoring": "refactoring"
+    "refactoring": "refactoring",
+}
+
+# Canonical capability -> per-host tool name.
+TOOL_VOCABULARIES = {
+    "standard": {
+        "read": "Read", "write": "Write", "edit": "Edit",
+        "run": "Bash", "grep": "Grep", "glob": "Glob",
+    },
+    "antigravity": {
+        "read": "view_file", "write": "write_to_file", "edit": "replace_file_content",
+        "run": "run_command", "grep": "grep_search", "glob": "find_by_name",
+    },
 }
 
 ADAPTER_CONFIGS = {
@@ -28,15 +48,17 @@ ADAPTER_CONFIGS = {
         "context_budget": {
             "token_limit": 8000,
             "byte_limit": 32768,
-            "priority_focus": "Architecture specifications, layout definitions, interface contracts"
+            "priority_focus": "Architecture specifications, layout definitions, interface contracts",
         },
-        "allowed_tools": ["view_file", "grep_search", "find_by_name"],
+        "capabilities": ["read", "grep", "glob"],
         "focus_rules": [
             "Validate upstream analysis and verify layout requirements before code changes.",
-            "Formulate step-by-step implementation plan.",
-            "Keep context lightweight during initial discovery."
+            "Formulate a step-by-step implementation plan.",
+            "Keep context lightweight during initial discovery.",
         ],
-        "system_prompt": "[MASTERY ADAPTER: PLANNING STAGE] You are in the PLANNING stage. Focus strictly on system design, requirement verification, and architectural layout. Avoid code edits until the implementation plan is fully established."
+        "system_prompt": "[MASTERY ADAPTER: PLANNING STAGE] You are in the PLANNING stage. "
+                         "Focus strictly on system design, requirement verification, and architectural "
+                         "layout. Avoid code edits until the implementation plan is fully established.",
     },
     "building": {
         "canonical_stage": "building",
@@ -44,15 +66,17 @@ ADAPTER_CONFIGS = {
         "context_budget": {
             "token_limit": 16000,
             "byte_limit": 65536,
-            "priority_focus": "Minimal code edits, targeted helper logic, co-located test validation"
+            "priority_focus": "Minimal code edits, targeted helper logic, co-located test validation",
         },
-        "allowed_tools": ["view_file", "replace_file_content", "run_command", "write_to_file"],
+        "capabilities": ["read", "edit", "write", "run"],
         "focus_rules": [
             "Re-read every target file before modifying it.",
-            "Follow minimal change principle—edit only what is necessary.",
-            "Run build and test validation after every edit."
+            "Follow the minimal change principle — edit only what is necessary.",
+            "Run build and test validation after every edit.",
         ],
-        "system_prompt": "[MASTERY ADAPTER: BUILDING STAGE] You are in the BUILDING stage. Focus on minimal, high-precision code implementation. Verify all edits using test runner CLI commands."
+        "system_prompt": "[MASTERY ADAPTER: BUILDING STAGE] You are in the BUILDING stage. "
+                         "Focus on minimal, high-precision code implementation. Verify all edits "
+                         "using test runner CLI commands.",
     },
     "auditing": {
         "canonical_stage": "auditing",
@@ -60,15 +84,17 @@ ADAPTER_CONFIGS = {
         "context_budget": {
             "token_limit": 12000,
             "byte_limit": 49152,
-            "priority_focus": "Edge cases, boundary enforcement, CLI argument compliance, regression testing"
+            "priority_focus": "Edge cases, boundary enforcement, CLI argument compliance, regression testing",
         },
-        "allowed_tools": ["view_file", "run_command", "grep_search"],
+        "capabilities": ["read", "run", "grep"],
         "focus_rules": [
-            "Run full unit test harness and verify CLI --help outputs.",
+            "Run the full test harness and verify CLI --help outputs.",
             "Test error handling paths and boundary conditions.",
-            "Ensure no dummy logic or hardcoded verification cheats exist."
+            "Ensure no dummy logic or hardcoded verification cheats exist.",
         ],
-        "system_prompt": "[MASTERY ADAPTER: AUDITING STAGE] You are in the AUDITING stage. Inspect implementations for defects, boundary violations, and edge-case failures. Do not add new features."
+        "system_prompt": "[MASTERY ADAPTER: AUDITING STAGE] You are in the AUDITING stage. "
+                         "Inspect implementations for defects, boundary violations, and edge-case "
+                         "failures. Do not add new features.",
     },
     "refactoring": {
         "canonical_stage": "refactoring",
@@ -76,54 +102,68 @@ ADAPTER_CONFIGS = {
         "context_budget": {
             "token_limit": 8000,
             "byte_limit": 32768,
-            "priority_focus": "Offline reference runbooks, clean code layout, handoff report compilation"
+            "priority_focus": "Offline reference runbooks, clean code layout, handoff report compilation",
         },
-        "allowed_tools": ["view_file", "replace_file_content", "run_command"],
+        "capabilities": ["read", "edit", "run"],
         "focus_rules": [
-            "Ensure all helper scripts are executable at top-level scripts/ directory.",
+            "Ensure all helper scripts remain executable from the skill's scripts/ directory.",
             "Verify offline reference runbooks cover operational workflows.",
-            "Compile complete 5-component handoff.md report."
+            "Compile the handoff report (see the Handoff Report Template in the skill guide).",
         ],
-        "system_prompt": "[MASTERY ADAPTER: REFACTORING STAGE] You are in the REFACTORING & HANDOFF stage. Finalize documentation, synchronize top-level script integration, and compile the final handoff report."
-    }
+        "system_prompt": "[MASTERY ADAPTER: REFACTORING STAGE] You are in the REFACTORING & HANDOFF "
+                         "stage. Finalize documentation, synchronize script integration, and compile "
+                         "the final handoff report.",
+    },
 }
+
+
+def resolve_tools(capabilities, vocabulary: str):
+    vocab = TOOL_VOCABULARIES[vocabulary]
+    return [vocab[c] for c in capabilities if c in vocab]
 
 
 def main():
     parser = argparse.ArgumentParser(description="Mastery Stage-Specific Context Adapter Engine")
-    parser.add_argument("--stage", type=str, help="Target workflow stage (plan|build|audit|format)")
-    parser.add_argument("--load-adapter", type=str, help="Load stage adapter by name")
-    parser.add_argument("--list", "--list-stages", action="store_true", help="List all registered context stage adapters")
-    parser.add_argument("--get-prompt", action="store_true", help="Output raw system prompt string for active stage")
+    parser.add_argument("--stage", "--load-adapter", dest="stage", type=str,
+                        help="Target workflow stage (plan|build|audit|format)")
+    parser.add_argument("--tool-vocabulary", choices=sorted(TOOL_VOCABULARIES.keys()),
+                        default="standard",
+                        help="Tool-name vocabulary for allowed_tools (default: standard)")
+    parser.add_argument("--list", "--list-stages", action="store_true", dest="list_stages",
+                        help="List all registered context stage adapters")
+    parser.add_argument("--get-prompt", action="store_true",
+                        help="Output only the raw system prompt string for the stage")
     parser.add_argument("--json", action="store_true", help="Output machine-readable JSON format")
-    parser.add_argument("--dry-run", action="store_true", help="Preview stage adapter loading without applying state")
 
     args = parser.parse_args()
 
-    if args.list:
+    if args.list_stages:
         res = {
             "status": "SUCCESS",
             "stages": list(ADAPTER_CONFIGS.keys()),
-            "mappings": STAGE_MAPPINGS
+            "mappings": STAGE_MAPPINGS,
+            "tool_vocabularies": sorted(TOOL_VOCABULARIES.keys()),
         }
         if args.json:
             print(json.dumps(res, indent=2))
         else:
             print("Available Context Stage Adapters:")
             for k, v in ADAPTER_CONFIGS.items():
-                print(f"  - [{k}] {v['stage_name']} (token limit: {v['context_budget']['token_limit']})")
+                print(f"  - [{k}] {v['stage_name']} "
+                      f"(token limit: {v['context_budget']['token_limit']})")
         sys.exit(0)
 
-    target_stage_raw = args.stage or args.load_adapter
-    if not target_stage_raw:
+    if not args.stage:
         parser.print_help()
         sys.exit(0)
 
-    stage_key = STAGE_MAPPINGS.get(target_stage_raw.lower().strip())
-    if not stage_key or stage_key not in ADAPTER_CONFIGS:
-        err = {"status": "ERROR", "error": f"Unknown stage adapter '{target_stage_raw}'. Allowed stages: plan, build, audit, format."}
+    stage_key = STAGE_MAPPINGS.get(args.stage.lower().strip())
+    if not stage_key:
+        err = {"status": "ERROR",
+               "error": f"Unknown stage adapter '{args.stage}'. "
+                        f"Allowed: {', '.join(sorted(STAGE_MAPPINGS))}."}
         if args.json:
-            print(json.dumps(err))
+            print(json.dumps(err, indent=2))
         else:
             print(f"Error: {err['error']}", file=sys.stderr)
         sys.exit(1)
@@ -131,27 +171,39 @@ def main():
     adapter = ADAPTER_CONFIGS[stage_key]
 
     if args.get_prompt:
-        print(adapter["system_prompt"])
+        if args.json:
+            print(json.dumps({"status": "SUCCESS", "stage": stage_key,
+                              "system_prompt": adapter["system_prompt"]}, indent=2))
+        else:
+            print(adapter["system_prompt"])
         sys.exit(0)
 
+    allowed_tools = resolve_tools(adapter["capabilities"], args.tool_vocabulary)
     res = {
         "status": "SUCCESS",
-        "stage": target_stage_raw,
+        "stage": args.stage,
         "canonical_stage": adapter["canonical_stage"],
+        "stage_name": adapter["stage_name"],
         "context_budget": adapter["context_budget"],
-        "allowed_tools": adapter["allowed_tools"],
+        "capabilities": adapter["capabilities"],
+        "tool_vocabulary": args.tool_vocabulary,
+        "allowed_tools": allowed_tools,
         "focus_rules": adapter["focus_rules"],
         "system_prompt": adapter["system_prompt"],
-        "dry_run": args.dry_run
+        "enforcement": "advisory — the calling agent must apply this itself; "
+                       "this tool cannot restrict tools or enforce a token budget",
     }
 
     if args.json:
         print(json.dumps(res, indent=2))
     else:
-        print(f"[MASTERY ADAPTER LOADED] Stage: {adapter['canonical_stage'].upper()} ({adapter['stage_name']})")
-        print(f"Context Token Budget: {adapter['context_budget']['token_limit']} tokens")
-        print(f"Allowed Tools: {', '.join(adapter['allowed_tools'])}")
-        print(f"System Prompt Preview: {adapter['system_prompt'][:100]}...")
+        print(f"[MASTERY ADAPTER] {adapter['canonical_stage'].upper()} ({adapter['stage_name']})")
+        print(f"Token budget : {adapter['context_budget']['token_limit']}")
+        print(f"Allowed tools: {', '.join(allowed_tools)}  [{args.tool_vocabulary}]")
+        print("Focus rules:")
+        for rule in adapter["focus_rules"]:
+            print(f"  - {rule}")
+        print(f"Note: {res['enforcement']}")
 
     sys.exit(0)
 

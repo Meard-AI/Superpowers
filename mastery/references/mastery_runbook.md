@@ -1,55 +1,52 @@
-# Mastery () Offline Reference Runbook
+# Mastery — Offline Runbook
 
-## Overview
-Mastery provides stage-specific context adapters that dynamically tune system prompts, context budgets, and tool access filters as agents transition across development lifecycle stages.
+Condensed operational steps. For budget rationale and the handoff template see
+[`mastery_guide.md`](./mastery_guide.md).
 
-## Key Capabilities
-1. **Stage-Specific Adapters**: Standardized adapter configurations for , , , and  ().
-2. **Context Budgeting**: Prescribed token and byte budgets per stage to optimize context window space.
-3. **Prompt Disclosure**: Extraction of raw system prompt snippets ().
-4. **Tool Scope Filtering**: Tool recommendation matrices matched to lifecycle objectives.
+## Standard loop
+1. **Load** the adapter when entering a stage:
+   ```bash
+   python3 ./scripts/context_adapter.py --stage build --json
+   ```
+2. **Apply it to yourself.** Adopt `system_prompt`, respect `context_budget`, restrict
+   work to `allowed_tools`, follow `focus_rules`. Nothing enforces this for you.
+3. **Re-load** on every stage transition.
 
-## CLI Usage Guide
-{
-  "status": "SUCCESS",
-  "stage": "build",
-  "canonical_stage": "building",
-  "context_budget": {
-    "token_limit": 16000,
-    "byte_limit": 65536,
-    "priority_focus": "Minimal code edits, targeted helper logic, co-located test validation"
-  },
-  "allowed_tools": [
-    "view_file",
-    "replace_file_content",
-    "run_command",
-    "write_to_file"
-  ],
-  "focus_rules": [
-    "Re-read every target file before modifying it.",
-    "Follow minimal change principle—edit only what is necessary.",
-    "Run build and test validation after every edit."
-  ],
-  "system_prompt": "[MASTERY ADAPTER: BUILDING STAGE] You are in the BUILDING stage. Focus on minimal, high-precision code implementation. Verify all edits using test runner CLI commands.",
-  "dry_run": false
-}
-[MASTERY ADAPTER: PLANNING STAGE] You are in the PLANNING stage. Focus strictly on system design, requirement verification, and architectural layout. Avoid code edits until the implementation plan is fully established.
-{
-  "status": "SUCCESS",
-  "stages": [
-    "planning",
-    "building",
-    "auditing",
-    "refactoring"
-  ],
-  "mappings": {
-    "plan": "planning",
-    "planning": "planning",
-    "build": "building",
-    "building": "building",
-    "audit": "auditing",
-    "auditing": "auditing",
-    "format": "refactoring",
-    "refactoring": "refactoring"
-  }
-}
+## Stages
+| Short | Canonical | Tokens | Focus |
+|---|---|---|---|
+| `plan` | `planning` | 8,000 | Architecture, specs, layout discovery |
+| `build` | `building` | 16,000 | Minimal edits, test validation |
+| `audit` | `auditing` | 12,000 | QA, boundary checks, CLI compliance |
+| `format` | `refactoring` | 8,000 | Runbooks, cleanup, handoff |
+
+## Flags
+| Flag | Purpose |
+|---|---|
+| `--stage NAME` (`--load-adapter`) | Load a stage adapter |
+| `--list` (`--list-stages`) | Show all stages and aliases |
+| `--get-prompt` | Print only the system prompt |
+| `--tool-vocabulary standard\|antigravity` | Tool-name dialect (default `standard`) |
+| `--json` | Machine-readable output |
+
+## Tool vocabularies
+| Capability | `standard` | `antigravity` |
+|---|---|---|
+| read | `Read` | `view_file` |
+| write | `Write` | `write_to_file` |
+| edit | `Edit` | `replace_file_content` |
+| run | `Bash` | `run_command` |
+| grep | `Grep` | `grep_search` |
+| glob | `Glob` | `find_by_name` |
+
+## Exit codes
+| Code | Meaning |
+|---|---|
+| 0 | Adapter loaded or listed |
+| 1 | Unknown stage name |
+
+## Failure modes
+- **Unknown stage** — run `--list` for accepted names; both short and canonical work.
+- **Tool names do not match your host** — switch `--tool-vocabulary`.
+- **Budget appears not to apply** — correct. This adapter is advisory; see
+  `enforcement` in the output.
