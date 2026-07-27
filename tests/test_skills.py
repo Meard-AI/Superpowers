@@ -893,9 +893,20 @@ class TestSuiteContracts(SkillTestCase):
             base = REPO / skill
             helps = {}
             for script in (base / "scripts").glob("*.py"):
-                helps[script.name] = subprocess.run(
+                # stdin=DEVNULL for the same reason the scripts poll stdin: never
+                # inherit the runner's. And verify the help text actually arrived —
+                # without this check an empty result fails every flag assertion
+                # below at once, turning one transient hiccup into ~200 confusing
+                # subtest failures instead of a single clear one.
+                proc = subprocess.run(
                     [sys.executable, str(script), "--help"],
-                    capture_output=True, text=True, timeout=30).stdout
+                    capture_output=True, text=True, timeout=30,
+                    stdin=subprocess.DEVNULL)
+                self.assertEqual(proc.returncode, 0,
+                                 f"{script.name} --help exited {proc.returncode}: {proc.stderr}")
+                self.assertTrue(proc.stdout.strip(),
+                                f"{script.name} --help produced no output")
+                helps[script.name] = proc.stdout
 
             for doc in [base / "SKILL.md", *(base / "references").glob("*.md")]:
                 text = doc.read_text()
